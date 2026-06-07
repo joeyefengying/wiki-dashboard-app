@@ -17,7 +17,7 @@
             <a-radio-button value="🔼">🔼 中</a-radio-button>
             <a-radio-button value="🔽">🔽 低</a-radio-button>
           </a-radio-group>
-          <a-input v-model:value="newTaskText" :placeholder="taskFilter ? `添加${taskFilter}优先级任务…` : '添加任务…'" style="width: 240px" @pressEnter="addTask" />
+          <a-input size="small" v-model:value="newTaskText" :placeholder="taskFilter ? `添加${taskFilter}优先级任务…` : '添加任务…'" style="width: 240px" @pressEnter="addTask" />
           <a-button type="primary" size="small" @click="addTask">添加</a-button>
         </a-space>
 
