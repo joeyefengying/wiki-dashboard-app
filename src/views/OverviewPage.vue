@@ -17,6 +17,19 @@
       </a-col>
     </a-row>
 
+    <!-- 快速消化 -->
+    <a-card title="⚡ 快速消化" style="margin-top: 16px">
+      <a-space direction="vertical" style="width: 100%">
+        <a-input v-model:value="digestUrl" placeholder="粘贴 URL 或文件路径…" @pressEnter="digest('url')" />
+        <a-space>
+          <a-button type="primary" @click="digest('url')">消化外链</a-button>
+          <a-button @click="digest('local')">原地消化</a-button>
+          <a-button @click="digest('ai')">AI 资讯</a-button>
+        </a-space>
+        <span style="font-size: 12px; color: #999">命令自动复制到剪贴板 → 粘贴到 Claude Code 执行</span>
+      </a-space>
+    </a-card>
+
     <!-- 最近动态 -->
     <a-card title="最近动态" style="margin-top: 16px">
       <a-list :data-source="recentFiles" :loading="loading">
@@ -40,12 +53,14 @@
 
 <script setup lang="ts">
 import { ref, onMounted, reactive } from 'vue';
+import { message } from 'ant-design-vue';
 import type { VaultStats, FileInfo } from '@/types/electron';
 
 const api = window.electronAPI;
 
 const stats = reactive<VaultStats>({ entities: 0, topics: 0, sources: 0, synthesis: 0, totalFiles: 0 });
 const recentFiles = ref<FileInfo[]>([]);
+const digestUrl = ref('');
 const loading = ref(true);
 
 onMounted(async () => {
@@ -57,6 +72,23 @@ onMounted(async () => {
     loading.value = false;
   }
 });
+
+async function digest(type: string) {
+  let cmd = '';
+  if (type === 'url') {
+    const url = digestUrl.value.trim();
+    if (!url) { message.warning('请先输入 URL'); return; }
+    cmd = `/llm-wiki 消化 ${url}`;
+  } else if (type === 'local') {
+    const path = digestUrl.value.trim();
+    if (!path) { message.warning('请先输入路径'); return; }
+    cmd = `/llm-wiki 原地消化 ${path}`;
+  } else if (type === 'ai') {
+    cmd = '看一下今天 AI 圈有什么';
+  }
+  await navigator.clipboard.writeText(cmd);
+  message.success('命令已复制到剪贴板');
+}
 
 function openFile(path: string) {
   api.vault.openFile(path);
