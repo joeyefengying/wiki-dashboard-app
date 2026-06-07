@@ -10,14 +10,16 @@
     <a-tabs v-model:activeKey="activeTab">
       <!-- Tab 1: 任务 -->
       <a-tab-pane key="tasks" tab="任务">
+        <!-- 优先级筛选 -->
+        <a-radio-group v-model:value="taskFilter" button-style="solid" size="small" style="margin-bottom: 8px">
+          <a-radio-button value="">全部</a-radio-button>
+          <a-radio-button value="⏫">⏫ 高</a-radio-button>
+          <a-radio-button value="🔼">🔼 中</a-radio-button>
+          <a-radio-button value="🔽">🔽 低</a-radio-button>
+        </a-radio-group>
+
         <a-space style="margin-bottom: 12px">
-          <a-input v-model:value="newTaskText" placeholder="任务内容" style="width: 280px" @pressEnter="addTask" />
-          <a-select v-model:value="newTaskPrio" style="width: 100px" placeholder="优先级">
-            <a-select-option value="">无</a-select-option>
-            <a-select-option value="⏫">⏫ 高</a-select-option>
-            <a-select-option value="🔼">🔼 中</a-select-option>
-            <a-select-option value="🔽">🔽 低</a-select-option>
-          </a-select>
+          <a-input v-model:value="newTaskText" :placeholder="taskFilter ? `添加${taskFilter}优先级任务…` : '添加任务…'" style="width: 280px" @pressEnter="addTask" />
           <a-button type="primary" size="small" @click="addTask">添加</a-button>
         </a-space>
 
@@ -123,7 +125,7 @@ const activeTab = ref('tasks');
 
 // 任务
 const newTaskText = ref('');
-const newTaskPrio = ref('');
+const taskFilter = ref('');
 const tasks = ref<any[]>([]);
 
 // 速记
@@ -174,6 +176,10 @@ async function loadAll() {
   const allTasks = await api.vault.getAllOpenTasks();
   tasks.value = allTasks
     .filter(t => t.text.includes(name) || t.file.includes(name) || (t as any).raw?.includes(name))
+    .filter(t => {
+      if (!taskFilter.value) return true;
+      return (t as any).raw?.includes(taskFilter.value) || t.text.includes(taskFilter.value);
+    })
     .map(t => ({
       text: t.text.replace(/- \[ \] /, '').trim(),
       done: false,
@@ -193,12 +199,11 @@ async function addTask() {
   const text = newTaskText.value.trim();
   if (!text) return;
   let line = `- [ ] ${text}`;
-  if (newTaskPrio.value) line += ` ${newTaskPrio.value}`;
+  if (taskFilter.value) line += ` ${taskFilter.value}`;
   line += ` 🗂 [[${projPath.value}/README|${projName.value}]]`;
   const dailyPath = await api.vault.ensureDailyFile();
   await api.vault.appendToSection(dailyPath, '日常记录', line);
   newTaskText.value = '';
-  newTaskPrio.value = '';
   message.success('已添加');
   await loadAll();
 }
