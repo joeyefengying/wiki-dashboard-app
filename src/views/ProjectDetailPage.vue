@@ -36,7 +36,9 @@
               <span :style="{ textDecoration: record.done ? 'line-through' : 'none' }">{{ record.text }}</span>
             </template>
             <template v-else-if="column.key === 'file'">
-              <a @click="previewPath = record.file; previewVisible = true" style="font-size: 12px">{{ record.file }}</a>
+              <a-tooltip :title="record.file">
+                <a @click="previewPath = record.file; previewVisible = true" style="font-size: 12px">{{ record.file }}</a>
+              </a-tooltip>
             </template>
           </template>
         </a-table>
@@ -189,13 +191,17 @@ async function loadAll() {
       if (!taskFilter.value) return true;
       return (t as any).raw?.includes(taskFilter.value) || t.text.includes(taskFilter.value);
     })
-    .map(t => ({
-      text: t.text.replace(/- \[ \] /, '').trim(),
-      done: false,
-      priority: '',
-      raw: (t as any).raw || '',
-      file: t.file,
-    }));
+    .map(t => {
+      const raw = (t as any).raw || '';
+      const pm = raw.match(/⏫|🔼|🔽/);
+      return {
+        text: t.text.replace(/- \[ \] /, '').trim(),
+        done: false,
+        priority: pm ? pm[0] : '',
+        raw,
+        file: t.file,
+      };
+    });
 
   // 子项目
   const dirs = files.value.filter(e => e.isDir);
