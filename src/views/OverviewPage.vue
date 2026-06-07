@@ -25,8 +25,12 @@
           <a-button type="primary" @click="digest('url')">消化外链</a-button>
           <a-button @click="digest('local')">原地消化</a-button>
           <a-button @click="digest('ai')">AI 资讯</a-button>
+          <a-button type="primary" danger @click="digest('exec')" :loading="execLoading">▶ 直接执行</a-button>
         </a-space>
-        <span style="font-size: 12px; color: #999">命令自动复制到剪贴板 → 粘贴到 Claude Code 执行</span>
+        <div v-if="execResult" style="margin-top: 8px; padding: 8px; background: #f5f5f5; border-radius: 4px; max-height: 200px; overflow-y: auto; font-size: 12px; white-space: pre-wrap">
+          {{ execResult }}
+        </div>
+        <span style="font-size: 12px; color: #999">前三个按钮复制命令，▶ 直接调用 claude CLI 执行</span>
       </a-space>
     </a-card>
 
@@ -67,6 +71,8 @@ const digestUrl = ref('');
 const loading = ref(true);
 const previewVisible = ref(false);
 const previewPath = ref('');
+const execLoading = ref(false);
+const execResult = ref('');
 
 onMounted(async () => {
   try {
@@ -91,6 +97,32 @@ async function digest(type: string) {
   } else if (type === 'ai') {
     cmd = '看一下今天 AI 圈有什么';
   }
+
+  if (type === 'exec') {
+    // 直接执行模式
+    const url = digestUrl.value.trim();
+    if (!url) { message.warning('请先输入 URL'); return; }
+    const prompt = `/llm-wiki 消化 ${url}`;
+    execLoading.value = true;
+    execResult.value = '';
+    try {
+      const result = await (window as any).electronAPI?.cli?.execClaude(prompt);
+      if (result?.success) {
+        execResult.value = result.output;
+        message.success('消化完成');
+      } else {
+        execResult.value = result?.output || '执行失败';
+        message.error('消化失败，见下方输出');
+      }
+    } catch (e: any) {
+      execResult.value = e?.message || String(e);
+      message.error('执行异常');
+    } finally {
+      execLoading.value = false;
+    }
+    return;
+  }
+
   await navigator.clipboard.writeText(cmd);
   message.success('命令已复制到剪贴板');
 }

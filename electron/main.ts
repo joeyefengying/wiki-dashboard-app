@@ -3,12 +3,14 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { VaultService } from './services/vault-service';
 import { GitService } from './services/git-service';
+import { CliService } from './services/cli-service';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 let mainWindow: BrowserWindow | null = null;
 const vaultService = new VaultService();
 const gitService = new GitService();
+const cliService = new CliService();
 
 function createWindow() {
     mainWindow = new BrowserWindow({
@@ -132,6 +134,9 @@ function registerIpc() {
     ipcMain.handle('git:push', async () => await gitService.push());
     ipcMain.handle('git:commit', async (_event, msg: string) => await gitService.commit(msg));
     ipcMain.handle('git:sync', async (_event, msg?: string) => await gitService.sync(msg));
+
+    // CLI
+    ipcMain.handle('cli:execClaude', async (_event, prompt: string) => await cliService.execClaude(prompt));
 }
 
 app.whenReady().then(() => {

@@ -32,6 +32,9 @@ const api = {
         commit: (msg: string) => ipcRenderer.invoke('git:commit', msg),
         sync: (msg?: string) => ipcRenderer.invoke('git:sync', msg),
     },
+    cli: {
+        execClaude: (prompt: string) => ipcRenderer.invoke('cli:execClaude', prompt),
+    },
 };
 
 contextBridge.exposeInMainWorld('electronAPI', api);

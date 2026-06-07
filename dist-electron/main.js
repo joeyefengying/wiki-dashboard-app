@@ -5301,11 +5301,38 @@ var GitService = class {
 	}
 };
 //#endregion
+//#region electron/services/cli-service.ts
+var CliService = class {
+	constructor(root) {
+		this.vaultRoot = root || "E:/project/obsidian-wiki";
+	}
+	async execClaude(prompt) {
+		return new Promise((resolve) => {
+			(0, child_process.exec)(`claude -p "${prompt.replace(/"/g, "\\\"")}"`, {
+				cwd: this.vaultRoot,
+				timeout: 3e5,
+				maxBuffer: 10 * 1024 * 1024,
+				windowsHide: true
+			}, (error, stdout, stderr) => {
+				if (error) resolve({
+					success: false,
+					output: stderr || error.message || "执行失败"
+				});
+				else resolve({
+					success: true,
+					output: stdout || "（无输出）"
+				});
+			});
+		});
+	}
+};
+//#endregion
 //#region electron/main.ts
 var __dirname$1 = (0, path.dirname)((0, url.fileURLToPath)(require("url").pathToFileURL(__filename).href));
 var mainWindow = null;
 var vaultService = new VaultService();
 var gitService = new GitService();
+var cliService = new CliService();
 function createWindow() {
 	mainWindow = new electron.BrowserWindow({
 		width: 1400,
@@ -5399,6 +5426,7 @@ function registerIpc() {
 	electron.ipcMain.handle("git:push", async () => await gitService.push());
 	electron.ipcMain.handle("git:commit", async (_event, msg) => await gitService.commit(msg));
 	electron.ipcMain.handle("git:sync", async (_event, msg) => await gitService.sync(msg));
+	electron.ipcMain.handle("cli:execClaude", async (_event, prompt) => await cliService.execClaude(prompt));
 }
 electron.app.whenReady().then(() => {
 	registerIpc();

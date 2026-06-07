@@ -31,6 +31,7 @@ electron.contextBridge.exposeInMainWorld("electronAPI", {
 		push: () => electron.ipcRenderer.invoke("git:push"),
 		commit: (msg) => electron.ipcRenderer.invoke("git:commit", msg),
 		sync: (msg) => electron.ipcRenderer.invoke("git:sync", msg)
-	}
+	},
+	cli: { execClaude: (prompt) => electron.ipcRenderer.invoke("cli:execClaude", prompt) }
 });
 //#endregion
