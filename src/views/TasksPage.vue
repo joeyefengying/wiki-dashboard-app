@@ -2,11 +2,23 @@
   <div>
     <h2 style="margin-bottom: 12px">任务管理</h2>
 
-    <!-- 项目 Tabs -->
-    <a-tabs v-model:activeKey="activeProj" size="small" style="margin-bottom: 4px" @change="onProjChange">
-      <a-tab-pane key="all" tab="全部" />
-      <a-tab-pane v-for="p in projects" :key="p.path" :tab="p.name" />
-    </a-tabs>
+    <!-- 项目切换 -->
+    <a-space style="margin-bottom: 12px" align="center">
+      <span style="font-size: 13px; color: #999">项目筛选：</span>
+      <a-select
+        v-model:value="selectedProj"
+        style="width: 260px"
+        placeholder="全部任务"
+        size="small"
+        allow-clear
+        show-search
+        option-filter-prop="label"
+        @change="onProjChange"
+      >
+        <a-select-option value="" label="全部任务">📋 全部任务</a-select-option>
+        <a-select-option v-for="p in projects" :key="p.path" :value="p.path" :label="p.name">{{ p.name }}</a-select-option>
+      </a-select>
+    </a-space>
 
     <a-card size="small">
       <TaskPanel :proj-path="selectedProj" @preview="onPreview" />
@@ -22,7 +34,6 @@ import FilePreview from '@/components/FilePreview.vue';
 
 const api = window.electronAPI;
 
-const activeProj = ref('all');
 const selectedProj = ref('');
 const projects = ref<Array<{ name: string; path: string }>>([]);
 
@@ -34,8 +45,8 @@ onMounted(async () => {
   projects.value = dirs.filter(d => d.isDir).map(d => ({ name: d.name, path: d.path }));
 });
 
-function onProjChange(key: string) {
-  selectedProj.value = key === 'all' ? '' : key;
+function onProjChange(val: string) {
+  // selectedProj 已通过 v-model 绑定
 }
 
 function onPreview(path: string) {
