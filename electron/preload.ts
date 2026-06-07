@@ -25,6 +25,13 @@ const api = {
         openExternal: (uri: string) => ipcRenderer.invoke('vault:openExternal', uri),
         getAllOpenTasks: () => ipcRenderer.invoke('vault:getAllOpenTasks'),
     },
+    git: {
+        status: () => ipcRenderer.invoke('git:status'),
+        pull: () => ipcRenderer.invoke('git:pull'),
+        push: () => ipcRenderer.invoke('git:push'),
+        commit: (msg: string) => ipcRenderer.invoke('git:commit', msg),
+        sync: (msg?: string) => ipcRenderer.invoke('git:sync', msg),
+    },
 };
 
 contextBridge.exposeInMainWorld('electronAPI', api);

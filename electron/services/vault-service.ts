@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync, appendFileSync, readdirSync, statSync, existsSync, mkdirSync, renameSync, rmdirSync } from 'fs';
 import { join, dirname, basename } from 'path';
 
-const VAULT_ROOT = 'E:/project/obsidian-wiki';
+export const VAULT_ROOT = 'E:/project/obsidian-wiki';
 
 export interface FileInfo {
     name: string;

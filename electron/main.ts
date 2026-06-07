@@ -2,11 +2,13 @@ import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { VaultService } from './services/vault-service';
+import { GitService } from './services/git-service';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 let mainWindow: BrowserWindow | null = null;
 const vaultService = new VaultService();
+const gitService = new GitService();
 
 function createWindow() {
     mainWindow = new BrowserWindow({
@@ -123,6 +125,13 @@ function registerIpc() {
     ipcMain.handle('vault:getAllOpenTasks', async () => {
         return await vaultService.getAllOpenTasks();
     });
+
+    // Git
+    ipcMain.handle('git:status', async () => await gitService.status());
+    ipcMain.handle('git:pull', async () => await gitService.pull());
+    ipcMain.handle('git:push', async () => await gitService.push());
+    ipcMain.handle('git:commit', async (_event, msg: string) => await gitService.commit(msg));
+    ipcMain.handle('git:sync', async (_event, msg?: string) => await gitService.sync(msg));
 }
 
 app.whenReady().then(() => {

@@ -24,10 +24,23 @@
           <a-menu-item key="/capabilities"><ThunderboltOutlined /><span>能力</span></a-menu-item>
           <a-menu-item key="/settings"><SettingOutlined /><span>设置</span></a-menu-item>
         </a-menu>
-        <div style="position: absolute; bottom: 16px; width: 100%; text-align: center">
-          <a-button size="small" shape="circle" @click="isDark = !isDark">
-            <template #icon><BulbOutlined /></template>
-          </a-button>
+        <div style="position: absolute; bottom: 8px; width: 100%; padding: 0 12px">
+          <div v-if="gitStatus" style="margin-bottom: 8px; display: flex; align-items: center; gap: 4px">
+            <a-badge
+              :count="changeCount"
+              :number-style="{ backgroundColor: gitStatus.hasChanges ? '#cf7a4c' : '#52c41a', fontSize: '10px' }"
+              size="small"
+            >
+              <a-button size="small" type="text" @click="gitSync" :loading="gitLoading" style="font-size: 11px">
+                {{ gitStatus.current }}
+              </a-button>
+            </a-badge>
+          </div>
+          <div style="text-align: center">
+            <a-button size="small" shape="circle" @click="isDark = !isDark">
+              <template #icon><BulbOutlined /></template>
+            </a-button>
+          </div>
         </div>
       </a-layout-sider>
       <a-layout :style="{ background: isDark ? '#141414' : '#f5f5f5' }">
@@ -42,7 +55,7 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { theme } from 'ant-design-vue';
+import { theme, message } from 'ant-design-vue';
 import zhCN from 'ant-design-vue/es/locale/zh_CN';
 import {
   AppstoreOutlined, CheckSquareOutlined, EditOutlined,
@@ -54,6 +67,39 @@ const route = useRoute();
 const collapsed = ref(false);
 const selectedKeys = ref<string[]>([route.path]);
 const isDark = ref(window.matchMedia('(prefers-color-scheme: dark)').matches);
+const gitStatus = ref<any>(null);
+const gitLoading = ref(false);
+
+// 计算变更数
+const changeCount = computed(() => {
+  if (!gitStatus.value) return 0;
+  const s = gitStatus.value;
+  return (s.modified?.length || 0) + (s.added?.length || 0) + (s.deleted?.length || 0) + (s.untracked?.length || 0);
+});
+
+// 加载 Git 状态
+async function loadGitStatus() {
+  try {
+    gitStatus.value = await (window as any).electronAPI?.git?.status();
+  } catch { /* git repo not available */ }
+}
+
+async function gitSync() {
+  gitLoading.value = true;
+  try {
+    const result = await (window as any).electronAPI?.git?.sync();
+    message.success(result);
+    await loadGitStatus();
+  } catch (e: any) {
+    message.error(`同步失败：${e?.message || e}`);
+  } finally {
+    gitLoading.value = false;
+  }
+}
+
+// 定时刷新
+setInterval(loadGitStatus, 30000);
+loadGitStatus();
 
 watch(() => route.path, (val) => { selectedKeys.value = [val]; });
 watch(isDark, (val) => {
