@@ -145,8 +145,8 @@ const activeTab = ref('tasks');
 const newTaskText = ref('');
 const taskFilter = ref('');
 const tasks = ref<any[]>([]);
-const openTasks = computed(() => tasks.value.filter(t => !t.done));
-const doneTasks = computed(() => tasks.value.filter(t => t.done));
+const openTasks = computed(() => filteredTasks.value.filter(t => !t.done));
+const doneTasks = computed(() => filteredTasks.value.filter(t => t.done));
 
 // 速记
 const captureContent = ref('');
@@ -177,8 +177,10 @@ const taskColumns = [
 
 onMounted(async () => { await loadAll(); });
 
-// 筛选切换时重新过滤
-watch(taskFilter, () => { loadAll(); });
+const filteredTasks = computed(() => {
+  if (!taskFilter.value) return tasks.value;
+  return tasks.value.filter(t => t.raw?.includes(taskFilter.value) || t.text.includes(taskFilter.value));
+});
 
 async function loadAll() {
   const p = projPath.value;
@@ -200,16 +202,13 @@ async function loadAll() {
   console.log('[loadAll] allTasks count:', allTasks.length, 'name:', name);
   if (allTasks.length > 0) console.log('[loadAll] sample:', allTasks.slice(0, 3).map(t => ({ text: t.text.substring(0, 40), file: t.file, raw: (t as any).raw?.substring(0, 40) })));
   // 先用包含 name 的 raw 或 file 匹配
+  // 全部加载，优先级筛选交给客户端 computed
   tasks.value = allTasks
     .filter(t => {
       const inText = t.text.includes(name);
       const inFile = t.file.includes(name);
       const inRaw = (t as any).raw?.includes(name);
       return inText || inFile || inRaw;
-    })
-    .filter(t => {
-      if (!taskFilter.value) return true;
-      return (t as any).raw?.includes(taskFilter.value) || t.text.includes(taskFilter.value);
     })
     .map(t => {
       const raw = (t as any).raw || '';
