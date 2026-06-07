@@ -282,14 +282,17 @@ var VaultService = class {
 		const allWalk = this.walkFiles(this.root);
 		const mdFiles = allWalk.filter((f) => f.endsWith(".md") && !f.includes(".obsidian") && !f.includes("raw/"));
 		console.log("[getAllOpenTasks] walkFiles total:", allWalk.length, "mdFiles:", mdFiles.length);
-		for (const f of mdFiles.slice(0, 250)) {
+		const sorted = [...mdFiles].sort((a, b) => {
+			return (a.includes("周期笔记") ? 0 : 1) - (b.includes("周期笔记") ? 0 : 1);
+		});
+		for (const f of sorted) {
 			const lines = (0, fs.readFileSync)(f, "utf-8").split("\n");
 			for (const line of lines) if (line.match(/^\s*- \[ \] /)) results.push({
 				text: line.trim().replace(/- \[ \] /, ""),
 				file: f.replace(/\\/g, "/").replace(rootNorm + "/", ""),
 				raw: line
 			});
-			if (results.length >= 40) break;
+			if (results.length >= 200) break;
 		}
 		return results;
 	}

@@ -330,7 +330,13 @@ export class VaultService {
         const mdFiles = allWalk
             .filter(f => f.endsWith('.md') && !f.includes('.obsidian') && !f.includes('raw/'));
         console.log('[getAllOpenTasks] walkFiles total:', allWalk.length, 'mdFiles:', mdFiles.length);
-        for (const f of mdFiles.slice(0, 250)) {
+        // 优先扫描周期笔记，再扫其他
+        const sorted = [...mdFiles].sort((a, b) => {
+            const aPeriod = a.includes('周期笔记') ? 0 : 1;
+            const bPeriod = b.includes('周期笔记') ? 0 : 1;
+            return aPeriod - bPeriod;
+        });
+        for (const f of sorted) {
             const content = readFileSync(f, 'utf-8');
             const lines = content.split('\n');
             for (const line of lines) {
@@ -342,7 +348,7 @@ export class VaultService {
                     });
                 }
             }
-            if (results.length >= 40) break;
+            if (results.length >= 200) break;
         }
         return results;
     }
