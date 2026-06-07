@@ -146,7 +146,7 @@ const newTaskText = ref('');
 const taskFilter = ref('');
 const tasks = ref<any[]>([]);
 const openTasks = computed(() => filteredTasks.value.filter(t => !t.done));
-const doneTasks = computed(() => filteredTasks.value.filter(t => t.done));
+const doneTasks = computed(() => tasks.value.filter(t => t.done)); // 已完成不过滤优先级，始终显示
 
 // 速记
 const captureContent = ref('');
