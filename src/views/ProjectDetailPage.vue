@@ -1,77 +1,95 @@
 <template>
   <div>
-    <a-page-header
-      :title="projName"
-      @back="router.back()"
-    >
+    <a-page-header :title="projName" @back="router.back()">
       <template #tags>
         <a-tag>{{ fileCount }} 文件</a-tag>
         <a-tag color="blue">{{ tasks.length }} 待办</a-tag>
       </template>
-      <template #extra>
-        <a-space>
-          <a-button size="small" @click="openReadme">📄 README</a-button>
-          <a-button size="small" @click="showAddTask = !showAddTask">+ 添加任务</a-button>
-        </a-space>
-      </template>
     </a-page-header>
 
-    <!-- 添加任务 -->
-    <a-card v-if="showAddTask" size="small" style="margin-bottom: 12px">
-      <a-space>
-        <a-input v-model:value="newTaskText" placeholder="任务内容" style="width: 300px" @pressEnter="addTask" />
-        <a-select v-model:value="newTaskPrio" style="width: 100px" placeholder="优先级">
-          <a-select-option value="">无</a-select-option>
-          <a-select-option value="⏫">⏫ 高</a-select-option>
-          <a-select-option value="🔼">🔼 中</a-select-option>
-          <a-select-option value="🔽">🔽 低</a-select-option>
-        </a-select>
-        <a-button type="primary" size="small" @click="addTask">添加</a-button>
-      </a-space>
-    </a-card>
+    <a-tabs v-model:activeKey="activeTab" style="margin-top: -8px">
+      <!-- Tab 1: 任务 -->
+      <a-tab-pane key="tasks" tab="任务">
+        <a-space style="margin-bottom: 12px">
+          <a-input v-model:value="newTaskText" placeholder="任务内容" style="width: 280px" @pressEnter="addTask" />
+          <a-select v-model:value="newTaskPrio" style="width: 100px" placeholder="优先级">
+            <a-select-option value="">无</a-select-option>
+            <a-select-option value="⏫">⏫ 高</a-select-option>
+            <a-select-option value="🔼">🔼 中</a-select-option>
+            <a-select-option value="🔽">🔽 低</a-select-option>
+          </a-select>
+          <a-button type="primary" size="small" @click="addTask">添加</a-button>
+        </a-space>
 
-    <!-- 两栏 -->
-    <a-row :gutter="16">
-      <!-- 左：README 预览 -->
-      <a-col :span="14">
-        <a-card title="README" size="small">
-          <div v-if="readmeContent" class="markdown-preview" v-html="readmeHtml" />
-          <a-empty v-else description="暂无 README" />
-        </a-card>
-
-        <!-- 子项目 -->
-        <a-card title="子项目" size="small" style="margin-top: 12px" v-if="subProjects.length > 0">
-          <a-tree :tree-data="subProjects" :field-names="{ title: 'name', key: 'path', children: 'children' }" default-expand-all show-line block-node>
-            <template #title="{ name, path }">
-              <a @click="router.push(`/project/${encodeURIComponent(path)}`)">{{ name }}</a>
+        <a-table
+          :columns="taskColumns"
+          :data-source="tasks"
+          :pagination="false"
+          size="small"
+          row-key="raw"
+        >
+          <template #bodyCell="{ column, record }">
+            <template v-if="column.key === 'done'">
+              <a-checkbox :checked="record.done" @change="toggleTask(record)" />
             </template>
-          </a-tree>
-        </a-card>
-      </a-col>
-
-      <!-- 右：任务列表 -->
-      <a-col :span="10">
-        <a-card title="关联任务" size="small">
-          <a-table
-            :columns="taskColumns"
-            :data-source="tasks"
-            :pagination="false"
-            size="small"
-            row-key="raw"
-          >
-            <template #bodyCell="{ column, record }">
-              <template v-if="column.key === 'done'">
-                <a-checkbox :checked="record.done" @change="toggleTask(record)" />
-              </template>
-              <template v-else-if="column.key === 'text'">
-                <span :style="{ textDecoration: record.done ? 'line-through' : 'none' }">{{ record.text }}</span>
-              </template>
+            <template v-else-if="column.key === 'text'">
+              <span :style="{ textDecoration: record.done ? 'line-through' : 'none' }">{{ record.text }}</span>
             </template>
-          </a-table>
-          <a-empty v-if="tasks.length === 0" description="暂无关联任务" />
-        </a-card>
-      </a-col>
-    </a-row>
+          </template>
+        </a-table>
+        <a-empty v-if="tasks.length === 0" description="暂无任务" />
+      </a-tab-pane>
+
+      <!-- Tab 2: 速记 -->
+      <a-tab-pane key="capture" tab="速记">
+        <div style="margin-bottom: 8px; display: flex; gap: 6px">
+          <a-button size="small" @click="insertTpl('')">💡 想法</a-button>
+          <a-button size="small" @click="insertTpl('- [ ] ')">✅ 待办</a-button>
+          <a-button size="small" @click="insertTpl('> [!important]\n> ')">📌 重点</a-button>
+          <a-button size="small" @click="insertTpl('- [ ] 阅读：')">🔗 链接</a-button>
+        </div>
+        <a-textarea v-model:value="captureContent" :rows="6" placeholder="Ctrl+Enter 保存…" @keydown="onCaptureKey" />
+        <div style="margin-top: 8px; display: flex; gap: 8px; align-items: center">
+          <a-input v-model:value="captureTags" placeholder="标签（可选）" style="flex: 1" size="small" />
+          <a-button type="primary" size="small" @click="saveCapture" :loading="captureSaving">保存</a-button>
+        </div>
+      </a-tab-pane>
+
+      <!-- Tab 3: 子项目 -->
+      <a-tab-pane key="sub" tab="子项目">
+        <a-tree
+          v-if="subProjects.length > 0"
+          :tree-data="subProjects"
+          :field-names="{ title: 'name', key: 'path', children: 'children' }"
+          default-expand-all show-line block-node
+        >
+          <template #title="{ name, path }">
+            <a @click="router.push(`/project/${encodeURIComponent(path)}`)">{{ name }}</a>
+          </template>
+        </a-tree>
+        <a-empty v-else description="暂无子项目" />
+      </a-tab-pane>
+
+      <!-- Tab 4: 文件 -->
+      <a-tab-pane key="files" tab="文件">
+        <a-list :data-source="files" size="small">
+          <template #renderItem="{ item }">
+            <a-list-item>
+              <a @click="previewPath = item.path; previewVisible = true">{{ item.name }}</a>
+            </a-list-item>
+          </template>
+        </a-list>
+        <a-empty v-if="files.length === 0" description="暂无文件" />
+      </a-tab-pane>
+
+      <!-- Tab 5: 介绍 -->
+      <a-tab-pane key="readme" tab="介绍">
+        <div v-if="readmeContent" class="markdown-preview" v-html="readmeHtml" />
+        <a-empty v-else description="暂无 README" />
+      </a-tab-pane>
+    </a-tabs>
+
+    <FilePreview v-model:visible="previewVisible" :file-path="previewPath" />
   </div>
 </template>
 
@@ -80,7 +98,8 @@ import { ref, onMounted, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { marked } from 'marked';
 import { message } from 'ant-design-vue';
-import type { ParsedTask, TreeNode } from '@/types/electron';
+import FilePreview from '@/components/FilePreview.vue';
+import type { FileInfo } from '@/types/electron';
 
 const router = useRouter();
 const route = useRoute();
@@ -89,15 +108,31 @@ const api = window.electronAPI;
 const projPath = computed(() => decodeURIComponent(route.params.path as string));
 const projName = computed(() => projPath.value.split('/').pop() || '');
 
-const readmeContent = ref('');
-const readmeHtml = ref('');
-const fileCount = ref(0);
-const tasks = ref<ParsedTask[]>([]);
-const subProjects = ref<TreeNode[]>([]);
+const activeTab = ref('tasks');
 
-const showAddTask = ref(false);
+// 任务
 const newTaskText = ref('');
 const newTaskPrio = ref('');
+const tasks = ref<any[]>([]);
+
+// 速记
+const captureContent = ref('');
+const captureTags = ref('');
+const captureSaving = ref(false);
+
+// 子项目
+const subProjects = ref<any[]>([]);
+
+// 文件
+const files = ref<FileInfo[]>([]);
+
+// 介绍
+const readmeContent = ref('');
+const readmeHtml = ref('');
+
+const fileCount = ref(0);
+const previewVisible = ref(false);
+const previewPath = ref('');
 
 const taskColumns = [
   { title: '', dataIndex: 'done', key: 'done', width: 40 },
@@ -106,55 +141,41 @@ const taskColumns = [
   { title: '来源', dataIndex: 'file', key: 'file', width: 100, ellipsis: true },
 ];
 
-onMounted(async () => {
-  await loadProject();
-});
+onMounted(async () => { await loadAll(); });
 
-async function loadProject() {
+async function loadAll() {
   const p = projPath.value;
-  // 读 README
+  const name = projName.value;
+
+  // 介绍
   try {
     const md = await api.vault.readFile(p + '/README.md');
     readmeContent.value = md;
     readmeHtml.value = await marked.parse(md);
   } catch { /* no README */ }
 
-  // 统计
-  const entries = await api.vault.listDir(p);
-  fileCount.value = entries.length;
+  // 文件
+  files.value = await api.vault.listDir(p);
+  fileCount.value = files.value.length;
 
-  // 搜索关联任务
+  // 任务
   const allTasks = await api.vault.getAllOpenTasks();
-  const name = projName.value;
-  console.log('[ProjectDetail] allOpenTasks:', allTasks.length, 'projName:', name);
-  // 也检查 text 原始内容是否包含项目关联标记 🗂
   tasks.value = allTasks
-    .filter(t => {
-      const match = t.text.includes(name) || t.file.includes(name) || (t as any).raw?.includes(name);
-      return match;
-    })
-    .map(t => {
-      const pm = t.text.match(/^(⏫|🔼|🔽)/);
-      const dm = t.text.match(/📅\s*(\d{4}-\d{2}-\d{2})/);
-      return {
-        text: t.text.replace(/- \[ \] /, '').trim(),
-        done: false,
-        priority: pm ? pm[1] : '',
-        due: dm ? dm[1] : '',
-        raw: (t as any).raw || '',
-        file: t.file,
-      } as any;
-    });
+    .filter(t => t.text.includes(name) || t.file.includes(name) || (t as any).raw?.includes(name))
+    .map(t => ({
+      text: t.text.replace(/- \[ \] /, '').trim(),
+      done: false,
+      priority: '',
+      raw: (t as any).raw || '',
+      file: t.file,
+    }));
 
-  // 子项目树
-  const allDirs = await api.vault.listDir(p);
-  const dirs = allDirs.filter(e => e.isDir);
+  // 子项目
+  const dirs = files.value.filter(e => e.isDir);
   subProjects.value = dirs.map(d => ({ name: d.name, path: d.path, children: [], fileCount: 0, isDir: true }));
 }
 
-function openReadme() {
-  api.vault.openFile(projPath.value + '/README.md');
-}
+// ── 任务操作 ──
 
 async function addTask() {
   const text = newTaskText.value.trim();
@@ -162,24 +183,54 @@ async function addTask() {
   let line = `- [ ] ${text}`;
   if (newTaskPrio.value) line += ` ${newTaskPrio.value}`;
   line += ` 🗂 [[${projPath.value}/README|${projName.value}]]`;
-
   const dailyPath = await api.vault.ensureDailyFile();
   await api.vault.appendToSection(dailyPath, '日常记录', line);
   newTaskText.value = '';
   newTaskPrio.value = '';
-  showAddTask.value = false;
   message.success('已添加');
-  await loadProject();
+  await loadAll();
 }
 
 async function toggleTask(task: any) {
-  if (!task.file) return;
+  if (!task.file || !task.raw) return;
   const content = await api.vault.readFile(task.file);
   const toggled = task.done
     ? task.raw.replace(/- \[x\]/, '- [ ]')
     : task.raw.replace(/- \[ \]/, '- [x]');
   await api.vault.writeFile(task.file, content.replace(task.raw, toggled));
-  await loadProject();
+  await loadAll();
+}
+
+// ── 速记 ──
+
+function insertTpl(tpl: string) {
+  captureContent.value += (captureContent.value ? '\n' : '') + tpl;
+}
+
+async function saveCapture() {
+  if (!captureContent.value.trim()) return;
+  captureSaving.value = true;
+  try {
+    let text = captureContent.value.trim();
+    if (captureTags.value.trim()) {
+      text += ' ' + captureTags.value.trim().split(/[,，]/).map(t => t.trim()).filter(Boolean).map(t => `#${t}`).join(' ');
+    }
+    text += `\n🗂 [[${projPath.value}/README|${projName.value}]]`;
+    const dailyPath = await api.vault.ensureDailyFile();
+    await api.vault.appendToSection(dailyPath, '日常记录', `\n${text}\n`);
+    captureContent.value = '';
+    captureTags.value = '';
+    message.success('已保存');
+  } finally {
+    captureSaving.value = false;
+  }
+}
+
+function onCaptureKey(e: KeyboardEvent) {
+  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+    e.preventDefault();
+    saveCapture();
+  }
 }
 </script>
 
