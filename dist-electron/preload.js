@@ -18,7 +18,9 @@ contextBridge.exposeInMainWorld("electronAPI", { vault: {
 	appendToSection: (dailyPath, section, line) => ipcRenderer.invoke("vault:appendToSection", dailyPath, section, line),
 	toggleTask: (dailyPath, raw, done) => ipcRenderer.invoke("vault:toggleTask", dailyPath, raw, done),
 	searchAllTasks: (pattern) => ipcRenderer.invoke("vault:searchAllTasks", pattern),
-	getEnabledPlugins: () => ipcRenderer.invoke("vault:getEnabledPlugins")
+	getEnabledPlugins: () => ipcRenderer.invoke("vault:getEnabledPlugins"),
+	openFile: (path) => ipcRenderer.invoke("vault:openFile", path),
+	getAllOpenTasks: () => ipcRenderer.invoke("vault:getAllOpenTasks")
 } });
 //#endregion
 export {};

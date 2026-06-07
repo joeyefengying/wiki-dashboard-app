@@ -98,31 +98,35 @@ async function createProject() {
   let readme = `# ${name}\n\n## 目标\n\n\n\n## 任务\n\n\`\`\`tasks\nnot done\ndescription includes ${name}\n\`\`\`\n\n## 记录\n`;
 
   // 检查是否是已有目录 → 导入模式
-  try {
-    const entries = await api.vault.listDir(raw);
-    if (entries.length > 0) {
-      name = raw.split('/').pop()!;
-      const files = entries.filter(e => !e.isDir && e.name.endsWith('.md'));
-      const dirs = entries.filter(e => e.isDir);
-      readme = `# ${name}\n\n> 来源：\`${raw}/\`（${entries.length} 条目 / ${dirs.length} 子目录）\n\n## 目标\n\n\n\n`;
-      if (dirs.length > 0) {
-        readme += `## 子模块\n\n`;
-        for (const d of dirs.slice(0, 12)) readme += `- **${d.name}**\n`;
-        readme += `\n`;
-      }
-      if (files.length > 0) {
-        readme += `## 关键文档\n\n`;
-        for (const f of files.slice(0, 10)) readme += `- [[${f.path}|${f.name.replace('.md', '')}]]\n`;
-        readme += `\n`;
-      }
-      readme += `## 任务\n\n\`\`\`tasks\nnot done\ndescription includes ${name}\n\`\`\`\n\n## 记录\n`;
-    }
-  } catch { /* 不是目录，普通名称创建 */ }
+  let entries: Array<{ name: string; path: string; isDir: boolean }> = [];
+  try { entries = await api.vault.listDir(raw); } catch { /* ignore */ }
 
-  await api.vault.createProject(`PARA 管理/1. 项目/${name}`, readme);
-  newProjName.value = '';
-  message.success(`项目「${name}」已创建`);
-  await loadTree();
+  if (entries.length > 0 && entries.some(e => e.isDir)) {
+    name = raw.split('/').pop() || name;
+    const files = entries.filter(e => !e.isDir && e.name.endsWith('.md'));
+    const dirs = entries.filter(e => e.isDir);
+    readme = `# ${name}\n\n> 来源：\`${raw}/\`（${entries.length} 条目 / ${dirs.length} 子目录）\n\n## 目标\n\n\n\n`;
+    if (dirs.length > 0) {
+      readme += `## 子模块\n\n`;
+      for (const d of dirs.slice(0, 12)) readme += `- **${d.name}**\n`;
+      readme += `\n`;
+    }
+    if (files.length > 0) {
+      readme += `## 关键文档\n\n`;
+      for (const f of files.slice(0, 10)) readme += `- [[${f.path}|${f.name.replace('.md', '')}]]\n`;
+      readme += `\n`;
+    }
+    readme += `## 任务\n\n\`\`\`tasks\nnot done\ndescription includes ${name}\n\`\`\`\n\n## 记录\n`;
+  }
+
+  try {
+    await api.vault.createProject(`PARA 管理/1. 项目/${name}`, readme);
+    newProjName.value = '';
+    message.success(`项目「${name}」已创建`);
+    await loadTree();
+  } catch (e: any) {
+    message.error(`创建失败：${e?.message || e}`);
+  }
 }
 
 function handleMenu(key: string, path: string) {
