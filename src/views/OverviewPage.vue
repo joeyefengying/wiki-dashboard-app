@@ -104,13 +104,15 @@ async function digest(type: string) {
     let input = digestUrl.value.trim();
     if (!input) { message.warning('请先输入 URL'); return; }
     // 智能去重：处理各种输入格式
-    if (input.startsWith('/llm-wiki')) {
-      // 已是完整命令，直接使用；追加"帮我"确保触发实际工作流
-      input = input.replace('/llm-wiki 消化', '/llm-wiki 帮我消化');
+    if (input.startsWith('http://') || input.startsWith('https://')) {
+      // 纯 URL → 用自然语言触发消化
+      input = `请帮我用 llm-wiki 消化这篇文章：${input}`;
+    } else if (input.startsWith('/llm-wiki')) {
+      input = input.replace('/llm-wiki', '请用 llm-wiki');
     } else if (input.startsWith('消化 ')) {
-      input = `/llm-wiki 帮我${input.slice(2)}`;
+      input = `请用 llm-wiki ${input}`;
     } else {
-      input = `/llm-wiki 帮我消化 ${input}`;
+      input = `请用 llm-wiki 消化：${input}`;
     }
     const prompt = input;
     if (consoleApi) {
