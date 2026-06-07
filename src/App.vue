@@ -12,46 +12,46 @@
           <span v-else>📋</span>
         </div>
 
-        <!-- 项目切换 -->
-        <div v-if="!collapsed" style="padding: 8px 12px">
-          <a-select
-            v-model:value="projStore.currentPath"
-            style="width: 100%"
-            placeholder="选择项目…"
-            size="small"
-            allow-clear
-            show-search
-            option-filter-prop="label"
-            @change="onProjectChange"
-          >
-            <a-select-option value="" label="全部（无项目）">📋 全部（无项目）</a-select-option>
-            <a-select-option v-for="p in projStore.projects" :key="p.path" :value="p.path" :label="p.name">{{ p.name }}</a-select-option>
-          </a-select>
-        </div>
-        <a-divider v-if="!collapsed" style="margin: 4px 0" />
+        <!-- 内层：项目返回 + 专属菜单 -->
+        <template v-if="projStore.projName && !collapsed">
+          <div style="padding: 8px 12px; font-size: 13px; font-weight: 600; color: var(--wd-accent, #cf7a4c); cursor: pointer" @click="exitProject">
+            ← {{ projStore.projName }}
+          </div>
+          <a-menu v-model:selectedKeys="selectedKeys" mode="inline" :theme="isDark ? 'dark' : 'light'" @click="onMenuClick">
+            <a-menu-item key="/tasks"><CheckSquareOutlined /><span>任务</span></a-menu-item>
+            <a-menu-item key="/capture"><EditOutlined /><span>速记</span></a-menu-item>
+            <a-menu-item key="/projects"><FolderOutlined /><span>项目</span></a-menu-item>
+            <a-menu-divider />
+            <a-menu-item key="/"><AppstoreOutlined /><span>返回概览</span></a-menu-item>
+          </a-menu>
+        </template>
 
-        <a-menu
-          v-model:selectedKeys="selectedKeys"
-          mode="inline"
-          :theme="isDark ? 'dark' : 'light'"
-          @click="onMenuClick"
-        >
-          <a-menu-item key="/"><AppstoreOutlined /><span>概览</span></a-menu-item>
-          <a-menu-item key="/tasks">
-            <CheckSquareOutlined />
-            <span>任务</span>
-            <a-tag v-if="projStore.projName && !collapsed" color="blue" style="font-size: 10px; margin-left: 4px">{{ projStore.projName }}</a-tag>
-          </a-menu-item>
-          <a-menu-item key="/capture">
-            <EditOutlined />
-            <span>速记</span>
-            <a-tag v-if="projStore.projName && !collapsed" color="blue" style="font-size: 10px; margin-left: 4px">{{ projStore.projName }}</a-tag>
-          </a-menu-item>
-          <a-menu-divider />
-          <a-menu-item key="/projects"><FolderOutlined /><span>项目</span></a-menu-item>
-          <a-menu-item key="/capabilities"><ThunderboltOutlined /><span>能力</span></a-menu-item>
-          <a-menu-item key="/settings"><SettingOutlined /><span>设置</span></a-menu-item>
-        </a-menu>
+        <!-- 外层：公共菜单 + 项目列表 -->
+        <template v-else>
+          <a-menu v-model:selectedKeys="selectedKeys" mode="inline" :theme="isDark ? 'dark' : 'light'" @click="onMenuClick">
+            <a-menu-item key="/"><AppstoreOutlined /><span>概览</span></a-menu-item>
+            <a-menu-item key="/tasks"><CheckSquareOutlined /><span>任务</span></a-menu-item>
+            <a-menu-item key="/capture"><EditOutlined /><span>速记</span></a-menu-item>
+            <a-menu-item key="/projects"><FolderOutlined /><span>项目</span></a-menu-item>
+            <a-menu-item key="/capabilities"><ThunderboltOutlined /><span>能力</span></a-menu-item>
+            <a-menu-item key="/settings"><SettingOutlined /><span>设置</span></a-menu-item>
+          </a-menu>
+
+          <!-- 活跃项目入口 -->
+          <div v-if="!collapsed" style="padding: 0 12px; margin-top: 8px">
+            <div style="font-size: 11px; color: #999; margin-bottom: 4px; padding-left: 8px">活跃项目</div>
+            <div v-for="p in projStore.projects" :key="p.path"
+              style="padding: 6px 8px; cursor: pointer; border-radius: 4px; font-size: 13px; display: flex; align-items: center; gap: 6px"
+              :style="{ color: isDark ? '#ccc' : '#333' }"
+              @click="enterProject(p.path)"
+              @mouseenter="(e: any) => e.target.style.background = isDark ? '#ffffff10' : '#00000008'"
+              @mouseleave="(e: any) => e.target.style.background = 'transparent'"
+            >
+              <FolderOutlined style="color: #faad14; font-size: 14px" />
+              <span>{{ p.name }}</span>
+            </div>
+          </div>
+        </template>
         <div style="position: absolute; bottom: 8px; width: 100%; padding: 0 12px">
           <div v-if="gitStatus" style="margin-bottom: 8px; display: flex; align-items: center; gap: 4px">
             <a-badge
@@ -188,8 +188,14 @@ const themeConfig = computed(() => ({
   },
 }));
 
-function onProjectChange() {
-  // 项目切换后保持在当前页，数据自动响应
+function enterProject(path: string) {
+  projStore.selectProject(path);
+  router.push('/tasks');
+}
+
+function exitProject() {
+  projStore.selectProject('');
+  router.push('/');
 }
 
 function onMenuClick({ key }: { key: string }) {
