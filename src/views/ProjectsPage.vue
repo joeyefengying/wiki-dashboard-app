@@ -66,6 +66,8 @@
     >
       <a-input v-model:value="childName" placeholder="子项目名称" />
     </a-modal>
+
+    <FilePreview v-model:visible="previewVisible" :file-path="previewPath" />
   </div>
 </template>
 
@@ -73,6 +75,7 @@
 import { ref, onMounted } from 'vue';
 import { message, Modal } from 'ant-design-vue';
 import { FolderOutlined, FolderOpenOutlined, PlusOutlined, DeleteOutlined, InboxOutlined } from '@ant-design/icons-vue';
+import FilePreview from '@/components/FilePreview.vue';
 import type { TreeNode } from '@/types/electron';
 
 const api = window.electronAPI;
@@ -85,6 +88,10 @@ const newProjName = ref('');
 const childModalVisible = ref(false);
 const childName = ref('');
 const childParentPath = ref('');
+
+// 文件预览
+const previewVisible = ref(false);
+const previewPath = ref('');
 
 onMounted(async () => {
   await loadTree();
@@ -145,7 +152,8 @@ async function createProject() {
 function handleMenu(key: string, path: string) {
   switch (key) {
     case 'open':
-      api.vault.readFile(path + '/README.md');
+      previewPath.value = path + '/README.md';
+      previewVisible.value = true;
       break;
     case 'addChild':
       childParentPath.value = path;

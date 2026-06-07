@@ -48,12 +48,15 @@
         </template>
       </a-list>
     </a-card>
+
+    <FilePreview v-model:visible="previewVisible" :file-path="previewPath" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, reactive } from 'vue';
 import { message } from 'ant-design-vue';
+import FilePreview from '@/components/FilePreview.vue';
 import type { VaultStats, FileInfo } from '@/types/electron';
 
 const api = window.electronAPI;
@@ -62,6 +65,8 @@ const stats = reactive<VaultStats>({ entities: 0, topics: 0, sources: 0, synthes
 const recentFiles = ref<FileInfo[]>([]);
 const digestUrl = ref('');
 const loading = ref(true);
+const previewVisible = ref(false);
+const previewPath = ref('');
 
 onMounted(async () => {
   try {
@@ -91,7 +96,8 @@ async function digest(type: string) {
 }
 
 function openFile(path: string) {
-  api.vault.openFile(path);
+  previewPath.value = path;
+  previewVisible.value = true;
 }
 
 function formatTime(mtime: number) {
