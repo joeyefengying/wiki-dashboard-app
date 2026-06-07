@@ -32,6 +32,11 @@ electron.contextBridge.exposeInMainWorld("electronAPI", {
 		commit: (msg) => electron.ipcRenderer.invoke("git:commit", msg),
 		sync: (msg) => electron.ipcRenderer.invoke("git:sync", msg)
 	},
-	cli: { execClaude: (prompt) => electron.ipcRenderer.invoke("cli:execClaude", prompt) }
+	cli: {
+		execClaude: (prompt) => electron.ipcRenderer.send("cli:execClaude", prompt),
+		kill: () => electron.ipcRenderer.send("cli:kill"),
+		onOutput: (cb) => electron.ipcRenderer.on("cli:output", (_e, line) => cb(line)),
+		onDone: (cb) => electron.ipcRenderer.on("cli:done", (_e, code) => cb(code))
+	}
 });
 //#endregion

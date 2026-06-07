@@ -44,16 +44,30 @@
         </div>
       </a-layout-sider>
       <a-layout :style="{ background: isDark ? '#141414' : '#f5f5f5' }">
-        <a-layout-content style="padding: 24px; overflow-y: auto">
+        <a-layout-content style="padding: 24px; overflow-y: auto" :style="{ paddingBottom: consoleVisible ? '260px' : '24px' }">
           <router-view />
         </a-layout-content>
       </a-layout>
+
+      <!-- 底部控制台 -->
+      <div v-if="consoleVisible" style="position: fixed; bottom: 0; left: 200px; right: 0; height: 240px; background: #1e1e1e; border-top: 1px solid #333; z-index: 100; display: flex; flex-direction: column">
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 4px 12px; background: #2d2d2d">
+          <span style="color: #ccc; font-size: 12px">控制台</span>
+          <a-space :size="4">
+            <a-button size="small" type="text" style="color: #ccc" @click="clearConsole">清空</a-button>
+            <a-button size="small" type="text" style="color: #ff4d4f" @click="killCli">终止</a-button>
+            <a-button size="small" type="text" style="color: #ccc" @click="consoleVisible = false">关闭</a-button>
+          </a-space>
+        </div>
+        <div ref="consoleEl" style="flex: 1; overflow-y: auto; padding: 8px 12px; font-family: 'Cascadia Code', 'Consolas', monospace; font-size: 12px; line-height: 1.6; color: #d4d4d4; white-space: pre-wrap">{{ consoleLines.join('\n') }}</div>
+        <div v-if="cliRunning" style="padding: 4px 12px; color: #cf7a4c; font-size: 11px">⏳ 执行中…</div>
+      </div>
     </a-layout>
   </a-config-provider>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue';
+import { ref, watch, computed, provide } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { theme, message } from 'ant-design-vue';
 import zhCN from 'ant-design-vue/es/locale/zh_CN';
@@ -69,6 +83,33 @@ const selectedKeys = ref<string[]>([route.path]);
 const isDark = ref(window.matchMedia('(prefers-color-scheme: dark)').matches);
 const gitStatus = ref<any>(null);
 const gitLoading = ref(false);
+
+// 控制台
+const consoleVisible = ref(false);
+const consoleLines = ref<string[]>([]);
+const cliRunning = ref(false);
+const consoleEl = ref<HTMLElement>();
+
+function showConsole() { consoleVisible.value = true; }
+function clearConsole() { consoleLines.value = []; }
+function killCli() { (window as any).electronAPI?.cli?.kill(); }
+
+provide('console', { showConsole, consoleLines, cliRunning });
+
+// 监听 CLI 输出
+(window as any).electronAPI?.cli?.onOutput((line: string) => {
+  consoleLines.value.push(line);
+  // 自动滚动到底部
+  setTimeout(() => {
+    if (consoleEl.value) consoleEl.value.scrollTop = consoleEl.value.scrollHeight;
+  }, 50);
+});
+(window as any).electronAPI?.cli?.onDone((code: number | null) => {
+  cliRunning.value = false;
+  if (code === 0) consoleLines.value.push('── 执行完成 ──');
+  else if (code === -1) consoleLines.value.push('── 已终止 ──');
+  else consoleLines.value.push(`── 退出码: ${code} ──`);
+});
 
 // 计算变更数
 const changeCount = computed(() => {

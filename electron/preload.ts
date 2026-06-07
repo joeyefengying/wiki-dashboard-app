@@ -33,7 +33,10 @@ const api = {
         sync: (msg?: string) => ipcRenderer.invoke('git:sync', msg),
     },
     cli: {
-        execClaude: (prompt: string) => ipcRenderer.invoke('cli:execClaude', prompt),
+        execClaude: (prompt: string) => ipcRenderer.send('cli:execClaude', prompt),
+        kill: () => ipcRenderer.send('cli:kill'),
+        onOutput: (cb: (line: string) => void) => ipcRenderer.on('cli:output', (_e, line) => cb(line)),
+        onDone: (cb: (code: number | null) => void) => ipcRenderer.on('cli:done', (_e, code) => cb(code)),
     },
 };
 

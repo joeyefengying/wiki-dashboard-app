@@ -5304,26 +5304,50 @@ var GitService = class {
 //#region electron/services/cli-service.ts
 var CliService = class {
 	constructor(root) {
+		this.activeProcess = null;
 		this.vaultRoot = root || "E:/project/obsidian-wiki";
 	}
-	async execClaude(prompt) {
-		return new Promise((resolve) => {
-			(0, child_process.exec)(`claude -p "${prompt.replace(/"/g, "\\\"")}"`, {
-				cwd: this.vaultRoot,
-				timeout: 3e5,
-				maxBuffer: 10 * 1024 * 1024,
-				windowsHide: true
-			}, (error, stdout, stderr) => {
-				if (error) resolve({
-					success: false,
-					output: stderr || error.message || "执行失败"
-				});
-				else resolve({
-					success: true,
-					output: stdout || "（无输出）"
-				});
-			});
+	/**
+	* 执行 claude 命令，实时推送输出到 callback
+	*/
+	execClaudeLive(prompt, onOutput, onDone) {
+		if (this.activeProcess) this.activeProcess.kill();
+		const proc = (0, child_process.spawn)(`claude`, ["-p", prompt], {
+			cwd: this.vaultRoot,
+			shell: true,
+			windowsHide: true,
+			env: {
+				...process.env,
+				FORCE_COLOR: "0"
+			}
 		});
+		this.activeProcess = proc;
+		proc.stdout.on("data", (data) => {
+			const lines = data.toString().split("\n");
+			for (const line of lines) if (line.trim()) onOutput(line);
+		});
+		proc.stderr.on("data", (data) => {
+			const lines = data.toString().split("\n");
+			for (const line of lines) if (line.trim()) onOutput(`[err] ${line}`);
+		});
+		proc.on("close", (code) => {
+			this.activeProcess = null;
+			onDone(code);
+		});
+		proc.on("error", (err) => {
+			onOutput(`[error] ${err.message}`);
+			this.activeProcess = null;
+			onDone(-1);
+		});
+	}
+	/**
+	* 终止当前执行
+	*/
+	kill() {
+		if (this.activeProcess) {
+			this.activeProcess.kill();
+			this.activeProcess = null;
+		}
 	}
 };
 //#endregion
@@ -5426,7 +5450,17 @@ function registerIpc() {
 	electron.ipcMain.handle("git:push", async () => await gitService.push());
 	electron.ipcMain.handle("git:commit", async (_event, msg) => await gitService.commit(msg));
 	electron.ipcMain.handle("git:sync", async (_event, msg) => await gitService.sync(msg));
-	electron.ipcMain.handle("cli:execClaude", async (_event, prompt) => await cliService.execClaude(prompt));
+	electron.ipcMain.on("cli:execClaude", (event, prompt) => {
+		cliService.execClaudeLive(prompt, (line) => {
+			if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send("cli:output", line);
+		}, (code) => {
+			if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send("cli:done", code);
+		});
+	});
+	electron.ipcMain.on("cli:kill", () => {
+		cliService.kill();
+		if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send("cli:done", -1);
+	});
 }
 electron.app.whenReady().then(() => {
 	registerIpc();

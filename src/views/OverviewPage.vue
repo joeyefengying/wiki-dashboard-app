@@ -58,7 +58,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, reactive } from 'vue';
+import { ref, onMounted, reactive, inject } from 'vue';
 import { message } from 'ant-design-vue';
 import FilePreview from '@/components/FilePreview.vue';
 import type { VaultStats, FileInfo } from '@/types/electron';
@@ -99,27 +99,19 @@ async function digest(type: string) {
   }
 
   if (type === 'exec') {
-    // 直接执行模式
+    // 直接执行模式 → 打开底部控制台
     const url = digestUrl.value.trim();
     if (!url) { message.warning('请先输入 URL'); return; }
     const prompt = `/llm-wiki 消化 ${url}`;
-    execLoading.value = true;
-    execResult.value = '';
-    try {
-      const result = await (window as any).electronAPI?.cli?.execClaude(prompt);
-      if (result?.success) {
-        execResult.value = result.output;
-        message.success('消化完成');
-      } else {
-        execResult.value = result?.output || '执行失败';
-        message.error('消化失败，见下方输出');
-      }
-    } catch (e: any) {
-      execResult.value = e?.message || String(e);
-      message.error('执行异常');
-    } finally {
-      execLoading.value = false;
+    const consoleApi = inject<any>('console');
+    if (consoleApi) {
+      consoleApi.showConsole();
+      consoleApi.consoleLines.value = [];
+      consoleApi.cliRunning.value = true;
     }
+    (window as any).electronAPI?.cli?.execClaude(prompt);
+    execLoading.value = true;
+    setTimeout(() => { execLoading.value = false; }, 1000);
     return;
   }
 

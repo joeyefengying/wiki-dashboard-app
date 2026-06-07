@@ -136,7 +136,28 @@ function registerIpc() {
     ipcMain.handle('git:sync', async (_event, msg?: string) => await gitService.sync(msg));
 
     // CLI
-    ipcMain.handle('cli:execClaude', async (_event, prompt: string) => await cliService.execClaude(prompt));
+    ipcMain.on('cli:execClaude', (event, prompt: string) => {
+        cliService.execClaudeLive(
+            prompt,
+            (line) => {
+                if (mainWindow && !mainWindow.isDestroyed()) {
+                    mainWindow.webContents.send('cli:output', line);
+                }
+            },
+            (code) => {
+                if (mainWindow && !mainWindow.isDestroyed()) {
+                    mainWindow.webContents.send('cli:done', code);
+                }
+            },
+        );
+    });
+
+    ipcMain.on('cli:kill', () => {
+        cliService.kill();
+        if (mainWindow && !mainWindow.isDestroyed()) {
+            mainWindow.webContents.send('cli:done', -1);
+        }
+    });
 }
 
 app.whenReady().then(() => {
