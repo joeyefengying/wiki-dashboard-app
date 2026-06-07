@@ -92,6 +92,7 @@ async function loadTree() {
 
 async function createProject() {
   const raw = newProjName.value.trim();
+  console.log('[createProject] raw:', raw);
   if (!raw) return;
 
   let name = raw;
@@ -120,11 +121,14 @@ async function createProject() {
   }
 
   try {
+    console.log('[createProject] creating:', `PARA 管理/1. 项目/${name}`);
     await api.vault.createProject(`PARA 管理/1. 项目/${name}`, readme);
+    console.log('[createProject] success');
     newProjName.value = '';
     message.success(`项目「${name}」已创建`);
     await loadTree();
   } catch (e: any) {
+    console.error('[createProject] error:', e);
     message.error(`创建失败：${e?.message || e}`);
   }
 }
