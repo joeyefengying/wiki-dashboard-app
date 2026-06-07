@@ -26,9 +26,11 @@ function createWindow() {
     // 开发模式加载 Vite dev server
     if (process.env.VITE_DEV_SERVER_URL) {
         mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
+        mainWindow.webContents.openDevTools();
     } else {
         mainWindow.loadFile(join(__dirname, '../dist/index.html'));
     }
+    console.log('[main] preload path:', join(__dirname, 'preload.js'));
 }
 
 // IPC 注册
