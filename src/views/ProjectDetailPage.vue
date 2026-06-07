@@ -126,8 +126,13 @@ async function loadProject() {
   // 搜索关联任务
   const allTasks = await api.vault.getAllOpenTasks();
   const name = projName.value;
+  console.log('[ProjectDetail] allOpenTasks:', allTasks.length, 'projName:', name);
+  // 也检查 text 原始内容是否包含项目关联标记 🗂
   tasks.value = allTasks
-    .filter(t => t.text.includes(name) || t.file.includes(name))
+    .filter(t => {
+      const match = t.text.includes(name) || t.file.includes(name) || (t as any).raw?.includes(name);
+      return match;
+    })
     .map(t => {
       const pm = t.text.match(/^(⏫|🔼|🔽)/);
       const dm = t.text.match(/📅\s*(\d{4}-\d{2}-\d{2})/);
