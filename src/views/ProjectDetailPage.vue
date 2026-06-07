@@ -57,6 +57,10 @@
 
       <!-- Tab 3: 子项目 -->
       <a-tab-pane key="sub" tab="子项目">
+        <a-space style="margin-bottom: 8px">
+          <a-input v-model:value="newChildName" placeholder="子项目名称" size="small" style="width: 200px" @pressEnter="addChild" />
+          <a-button size="small" type="primary" @click="addChild">+ 添加</a-button>
+        </a-space>
         <a-tree
           v-if="subProjects.length > 0"
           :tree-data="subProjects"
@@ -64,7 +68,13 @@
           default-expand-all show-line block-node
         >
           <template #title="{ name, path }">
-            <a @click="router.push(`/project/${encodeURIComponent(path)}`)">{{ name }}</a>
+            <div style="display: flex; align-items: center; gap: 8px; width: 100%">
+              <a @click="router.push(`/project/${encodeURIComponent(path)}`)" style="flex: 1">{{ name }}</a>
+              <a-space :size="2" style="flex-shrink: 0" @click.stop>
+                <a-button size="small" type="link" @click.stop="router.push(`/project/${encodeURIComponent(path)}`)"><FolderOpenOutlined /></a-button>
+                <a-button size="small" type="link" danger @click.stop="deleteChild(path)"><DeleteOutlined /></a-button>
+              </a-space>
+            </div>
           </template>
         </a-tree>
         <a-empty v-else description="暂无子项目" />
@@ -98,6 +108,7 @@ import { ref, onMounted, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { marked } from 'marked';
 import { message } from 'ant-design-vue';
+import { FolderOpenOutlined, DeleteOutlined } from '@ant-design/icons-vue';
 import FilePreview from '@/components/FilePreview.vue';
 import type { FileInfo } from '@/types/electron';
 
@@ -133,6 +144,7 @@ const readmeHtml = ref('');
 const fileCount = ref(0);
 const previewVisible = ref(false);
 const previewPath = ref('');
+const newChildName = ref('');
 
 const taskColumns = [
   { title: '', dataIndex: 'done', key: 'done', width: 40 },
@@ -224,6 +236,26 @@ async function saveCapture() {
   } finally {
     captureSaving.value = false;
   }
+}
+
+// ── 子项目操作 ──
+
+async function addChild() {
+  const name = newChildName.value.trim();
+  if (!name) return;
+  const path = `${projPath.value}/${name}`;
+  await api.vault.createProject(path, `# ${name}\n\n## 目标\n\n## 任务\n\n## 记录\n`);
+  newChildName.value = '';
+  message.success(`子项目「${name}」已创建`);
+  await loadAll();
+}
+
+async function deleteChild(path: string) {
+  const name = path.split('/').pop();
+  if (!confirm(`确认删除「${name}」？`)) return;
+  await api.vault.deleteProject(path);
+  message.success('已删除');
+  await loadAll();
 }
 
 function onCaptureKey(e: KeyboardEvent) {
