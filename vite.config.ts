@@ -16,6 +16,9 @@ export default defineConfig({
           build: {
             rollupOptions: {
               external: ['electron'],
+              output: {
+                format: 'cjs',
+              },
             },
           },
         },
@@ -24,6 +27,15 @@ export default defineConfig({
         entry: 'electron/preload.ts',
         onstart(args) {
           args.reload()
+        },
+        vite: {
+          build: {
+            rollupOptions: {
+              output: {
+                format: 'cjs',
+              },
+            },
+          },
         },
       },
     ]),

@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "description": "Wiki Dashboard — Electron 桌面应用，Vue3 + Ant Design + 本地 vault 管理",
   "main": "dist-electron/main.js",
-  "type": "module",
+  "type": "commonjs",
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
