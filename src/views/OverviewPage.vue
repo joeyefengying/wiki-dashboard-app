@@ -101,9 +101,10 @@ async function digest(type: string) {
 
   if (type === 'exec') {
     // 直接执行模式 → 打开底部控制台
-    const url = digestUrl.value.trim();
-    if (!url) { message.warning('请先输入 URL'); return; }
-    const prompt = `/llm-wiki 消化 ${url}`;
+    let input = digestUrl.value.trim();
+    if (!input) { message.warning('请先输入 URL'); return; }
+    // 如果用户粘贴了完整命令，直接使用；否则拼接
+    const prompt = input.startsWith('/llm-wiki') ? input : `/llm-wiki 消化 ${input}`;
     if (consoleApi) {
       consoleApi.showConsole?.();
       consoleApi.consoleLines.value = [];

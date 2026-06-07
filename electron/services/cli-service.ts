@@ -30,6 +30,7 @@ export class CliService {
             shell: true,
             windowsHide: true,
             env: { ...process.env, FORCE_COLOR: '0' },
+            stdio: ['ignore', 'pipe', 'pipe'], // 关闭 stdin，避免 claude 等待输入
         });
 
         this.activeProcess = proc;

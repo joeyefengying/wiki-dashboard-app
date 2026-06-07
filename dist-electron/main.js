@@ -5322,7 +5322,12 @@ var CliService = class {
 			env: {
 				...process.env,
 				FORCE_COLOR: "0"
-			}
+			},
+			stdio: [
+				"ignore",
+				"pipe",
+				"pipe"
+			]
 		});
 		this.activeProcess = proc;
 		proc.stdout.on("data", (data) => {
