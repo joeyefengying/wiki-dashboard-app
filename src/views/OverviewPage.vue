@@ -105,11 +105,12 @@ async function digest(type: string) {
     if (!input) { message.warning('请先输入 URL'); return; }
     // 智能去重：处理各种输入格式
     if (input.startsWith('/llm-wiki')) {
-      // 已是完整命令，直接使用
+      // 已是完整命令，直接使用；追加"帮我"确保触发实际工作流
+      input = input.replace('/llm-wiki 消化', '/llm-wiki 帮我消化');
     } else if (input.startsWith('消化 ')) {
-      input = `/llm-wiki ${input}`;
+      input = `/llm-wiki 帮我${input.slice(2)}`;
     } else {
-      input = `/llm-wiki 消化 ${input}`;
+      input = `/llm-wiki 帮我消化 ${input}`;
     }
     const prompt = input;
     if (consoleApi) {
