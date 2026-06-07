@@ -30,7 +30,7 @@
       <!-- Tab 3: 子项目 -->
       <a-tab-pane key="sub" tab="子项目">
         <a-space style="margin-bottom: 8px">
-          <a-input v-model:value="newChildName" placeholder="子项目名称" size="small" style="width: 200px" @pressEnter="addChild" />
+          <a-input v-model:value="newChildName" placeholder="子项目名称（回车确认）" size="small" style="width: 200px" @keydown.enter="addChild" />
           <a-button size="small" type="primary" @click="addChild">+ 添加</a-button>
         </a-space>
         <a-tree
