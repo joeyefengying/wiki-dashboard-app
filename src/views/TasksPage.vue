@@ -152,18 +152,13 @@ async function loadTasks() {
 }
 
 async function loadAllOpen() {
-  const pattern = selectedProject.value ? selectedProject.value.split('/').pop()! : '';
-  const results = await api.vault.searchAllTasks(pattern || '.');
-  allOpenTasks.value = results.slice(0, 20).map(r => {
-    const pm = r.text.match(/^(⏫|🔼|🔽)/);
-    const dm = r.text.match(/📅\s*(\d{4}-\d{2}-\d{2})/);
-    return {
-      text: r.text.replace(/- \[ \] /, '').trim(),
-      file: r.file.split('/').pop()?.replace('.md', '') || r.file,
-      priority: pm ? pm[1] : '',
-      due: dm ? dm[1] : '',
-    };
-  });
+  const results = await api.vault.getAllOpenTasks();
+  allOpenTasks.value = results.slice(0, 20).map(r => ({
+    text: r.text,
+    file: r.file.split('/').pop()?.replace('.md', '') || r.file,
+    priority: '',
+    due: '',
+  }));
 }
 
 async function selectProject(path: string) {

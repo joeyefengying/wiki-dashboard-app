@@ -299,6 +299,26 @@ export class VaultService {
         return plugins;
     }
 
+    async getAllOpenTasks(): Promise<Array<{ text: string; file: string }>> {
+        const results: Array<{ text: string; file: string }> = [];
+        const mdFiles = this.walkFiles(this.root)
+            .filter(f => f.endsWith('.md') && !f.includes('.obsidian') && !f.includes('raw/'));
+        for (const f of mdFiles.slice(0, 250)) {
+            const content = readFileSync(f, 'utf-8');
+            const lines = content.split('\n');
+            for (const line of lines) {
+                if (line.match(/^\s*- \[ \] /)) {
+                    results.push({
+                        text: line.trim().replace(/- \[ \] /, ''),
+                        file: f.replace(this.root + '/', '').replace(/\\/g, '/'),
+                    });
+                }
+            }
+            if (results.length >= 40) break;
+        }
+        return results;
+    }
+
     // ── 工具 ──
 
     private walkFiles(dir: string): string[] {

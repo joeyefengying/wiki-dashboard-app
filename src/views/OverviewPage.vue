@@ -59,7 +59,7 @@ onMounted(async () => {
 });
 
 function openFile(path: string) {
-  api.vault.readFile(path).then(() => {});
+  api.vault.openFile(path);
 }
 
 function formatTime(mtime: number) {

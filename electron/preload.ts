@@ -20,6 +20,8 @@ const api = {
         toggleTask: (dailyPath: string, raw: string, done: boolean) => ipcRenderer.invoke('vault:toggleTask', dailyPath, raw, done),
         searchAllTasks: (pattern: string) => ipcRenderer.invoke('vault:searchAllTasks', pattern),
         getEnabledPlugins: () => ipcRenderer.invoke('vault:getEnabledPlugins'),
+        openFile: (path: string) => ipcRenderer.invoke('vault:openFile', path),
+        getAllOpenTasks: () => ipcRenderer.invoke('vault:getAllOpenTasks'),
     },
 };
 

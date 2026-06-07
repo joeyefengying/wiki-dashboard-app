@@ -1,4 +1,4 @@
-import { BrowserWindow, app, ipcMain } from "electron";
+import { BrowserWindow, app, ipcMain, shell } from "electron";
 import { basename, dirname, join } from "path";
 import { fileURLToPath } from "url";
 import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, renameSync, rmdirSync, statSync, writeFileSync } from "fs";
@@ -320,6 +320,13 @@ function registerIpc() {
 	});
 	ipcMain.handle("vault:getEnabledPlugins", async () => {
 		return await vaultService.getEnabledPlugins();
+	});
+	ipcMain.handle("vault:openFile", async (_event, path) => {
+		const full = vaultService.vaultPath(path);
+		return await shell.openPath(full);
+	});
+	ipcMain.handle("vault:getAllOpenTasks", async () => {
+		return await vaultService.getAllOpenTasks();
 	});
 }
 app.whenReady().then(() => {

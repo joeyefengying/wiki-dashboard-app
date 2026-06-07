@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { VaultService } from './services/vault-service';
@@ -103,6 +103,15 @@ function registerIpc() {
 
     ipcMain.handle('vault:getEnabledPlugins', async () => {
         return await vaultService.getEnabledPlugins();
+    });
+
+    ipcMain.handle('vault:openFile', async (_event, path: string) => {
+        const full = vaultService.vaultPath(path);
+        return await shell.openPath(full);
+    });
+
+    ipcMain.handle('vault:getAllOpenTasks', async () => {
+        return await vaultService.getAllOpenTasks();
     });
 }
 
