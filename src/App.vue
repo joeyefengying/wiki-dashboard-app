@@ -96,19 +96,20 @@ function killCli() { (window as any).electronAPI?.cli?.kill(); }
 
 provide('console', { showConsole, consoleLines, cliRunning });
 
-// 监听 CLI 输出
-(window as any).electronAPI?.cli?.onOutput((line: string) => {
-  consoleLines.value.push(line);
-  // 自动滚动到底部
-  setTimeout(() => {
-    if (consoleEl.value) consoleEl.value.scrollTop = consoleEl.value.scrollHeight;
-  }, 50);
-});
-(window as any).electronAPI?.cli?.onDone((code: number | null) => {
-  cliRunning.value = false;
-  if (code === 0) consoleLines.value.push('── 执行完成 ──');
-  else if (code === -1) consoleLines.value.push('── 已终止 ──');
-  else consoleLines.value.push(`── 退出码: ${code} ──`);
+// 监听 CLI 输出（通过 postMessage 转发）
+window.addEventListener('message', (e) => {
+  if (e.data.type === 'cli:output') {
+    consoleLines.value.push(e.data.line);
+    setTimeout(() => {
+      if (consoleEl.value) consoleEl.value.scrollTop = consoleEl.value.scrollHeight;
+    }, 50);
+  }
+  if (e.data.type === 'cli:done') {
+    cliRunning.value = false;
+    if (e.data.code === 0) consoleLines.value.push('── 执行完成 ──');
+    else if (e.data.code === -1) consoleLines.value.push('── 已终止 ──');
+    else consoleLines.value.push(`── 退出码: ${e.data.code} ──`);
+  }
 });
 
 // 计算变更数

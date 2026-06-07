@@ -5451,6 +5451,8 @@ function registerIpc() {
 	electron.ipcMain.handle("git:commit", async (_event, msg) => await gitService.commit(msg));
 	electron.ipcMain.handle("git:sync", async (_event, msg) => await gitService.sync(msg));
 	electron.ipcMain.on("cli:execClaude", (event, prompt) => {
+		console.log("[cli] execClaude:", prompt.substring(0, 80));
+		if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send("cli:output", `$ ${prompt}`);
 		cliService.execClaudeLive(prompt, (line) => {
 			if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send("cli:output", line);
 		}, (code) => {

@@ -109,7 +109,7 @@ async function digest(type: string) {
       consoleApi.consoleLines.value = [];
       consoleApi.cliRunning.value = true;
     }
-    (window as any).electronAPI?.cli?.execClaude(prompt);
+    (window as any).electronAPI?.cli?.exec(prompt);
     execLoading.value = true;
     setTimeout(() => { execLoading.value = false; }, 1000);
     return;

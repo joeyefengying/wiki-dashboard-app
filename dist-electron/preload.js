@@ -1,6 +1,6 @@
 let electron = require("electron");
 //#region electron/preload.ts
-electron.contextBridge.exposeInMainWorld("electronAPI", {
+var api = {
 	vault: {
 		getStats: () => electron.ipcRenderer.invoke("vault:stats"),
 		recentFiles: (limit) => electron.ipcRenderer.invoke("vault:recentFiles", limit),
@@ -33,10 +33,21 @@ electron.contextBridge.exposeInMainWorld("electronAPI", {
 		sync: (msg) => electron.ipcRenderer.invoke("git:sync", msg)
 	},
 	cli: {
-		execClaude: (prompt) => electron.ipcRenderer.send("cli:execClaude", prompt),
-		kill: () => electron.ipcRenderer.send("cli:kill"),
-		onOutput: (cb) => electron.ipcRenderer.on("cli:output", (_e, line) => cb(line)),
-		onDone: (cb) => electron.ipcRenderer.on("cli:done", (_e, code) => cb(code))
+		exec: (prompt) => electron.ipcRenderer.send("cli:execClaude", prompt),
+		kill: () => electron.ipcRenderer.send("cli:kill")
 	}
+};
+electron.ipcRenderer.on("cli:output", (_e, line) => {
+	window.postMessage({
+		type: "cli:output",
+		line
+	}, "*");
 });
+electron.ipcRenderer.on("cli:done", (_e, code) => {
+	window.postMessage({
+		type: "cli:done",
+		code
+	}, "*");
+});
+electron.contextBridge.exposeInMainWorld("electronAPI", api);
 //#endregion

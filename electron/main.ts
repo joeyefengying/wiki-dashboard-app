@@ -137,6 +137,10 @@ function registerIpc() {
 
     // CLI
     ipcMain.on('cli:execClaude', (event, prompt: string) => {
+        console.log('[cli] execClaude:', prompt.substring(0, 80));
+        if (mainWindow && !mainWindow.isDestroyed()) {
+            mainWindow.webContents.send('cli:output', `$ ${prompt}`);
+        }
         cliService.execClaudeLive(
             prompt,
             (line) => {
