@@ -323,6 +323,37 @@ export class VaultService {
         return plugins;
     }
 
+    async getAllTasks(): Promise<Array<{ text: string; file: string; done: boolean; raw: string }>> {
+        const results: Array<{ text: string; file: string; done: boolean; raw: string }> = [];
+        const rootNorm = this.root.replace(/\\/g, '/');
+        const allWalk = this.walkFiles(this.root);
+        const mdFiles = allWalk
+            .filter(f => f.endsWith('.md') && !f.includes('.obsidian') && !f.includes('raw/'));
+        // 优先周期笔记，按路径倒序
+        const sorted = [...mdFiles].sort((a, b) => {
+            const aP = a.includes('周期笔记') ? 0 : 1;
+            const bP = b.includes('周期笔记') ? 0 : 1;
+            if (aP !== bP) return aP - bP;
+            return b.localeCompare(a);
+        });
+        for (const f of sorted) {
+            const content = readFileSync(f, 'utf-8');
+            const lines = content.split('\n');
+            for (const line of lines) {
+                const m = line.match(/^\s*- \[(.)\] (.+)$/);
+                if (!m) continue;
+                results.push({
+                    text: m[2].trim(),
+                    file: f.replace(/\\/g, '/').replace(rootNorm + '/', ''),
+                    done: m[1] !== ' ',
+                    raw: line,
+                });
+            }
+            if (results.length >= 500) break;
+        }
+        return results;
+    }
+
     async getAllOpenTasks(): Promise<Array<{ text: string; file: string }>> {
         const results: Array<{ text: string; file: string }> = [];
         const rootNorm = this.root.replace(/\\/g, '/');

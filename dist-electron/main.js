@@ -276,6 +276,31 @@ var VaultService = class {
 		}
 		return plugins;
 	}
+	async getAllTasks() {
+		const results = [];
+		const rootNorm = this.root.replace(/\\/g, "/");
+		const sorted = [...this.walkFiles(this.root).filter((f) => f.endsWith(".md") && !f.includes(".obsidian") && !f.includes("raw/"))].sort((a, b) => {
+			const aP = a.includes("周期笔记") ? 0 : 1;
+			const bP = b.includes("周期笔记") ? 0 : 1;
+			if (aP !== bP) return aP - bP;
+			return b.localeCompare(a);
+		});
+		for (const f of sorted) {
+			const lines = (0, fs.readFileSync)(f, "utf-8").split("\n");
+			for (const line of lines) {
+				const m = line.match(/^\s*- \[(.)\] (.+)$/);
+				if (!m) continue;
+				results.push({
+					text: m[2].trim(),
+					file: f.replace(/\\/g, "/").replace(rootNorm + "/", ""),
+					done: m[1] !== " ",
+					raw: line
+				});
+			}
+			if (results.length >= 500) break;
+		}
+		return results;
+	}
 	async getAllOpenTasks() {
 		const results = [];
 		const rootNorm = this.root.replace(/\\/g, "/");
@@ -5490,6 +5515,9 @@ function registerIpc() {
 	});
 	electron.ipcMain.handle("vault:getAllOpenTasks", async () => {
 		return await vaultService.getAllOpenTasks();
+	});
+	electron.ipcMain.handle("vault:getAllTasks", async () => {
+		return await vaultService.getAllTasks();
 	});
 	electron.ipcMain.handle("git:status", async () => await gitService.status());
 	electron.ipcMain.handle("git:pull", async () => await gitService.pull());

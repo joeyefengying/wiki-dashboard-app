@@ -198,7 +198,7 @@ async function loadAll() {
   fileCount.value = files.value.length;
 
   // 任务
-  const allTasks = await api.vault.getAllOpenTasks();
+  const allTasks = await api.vault.getAllTasks();
   console.log('[loadAll] allTasks count:', allTasks.length, 'name:', name);
   if (allTasks.length > 0) console.log('[loadAll] sample:', allTasks.slice(0, 3).map(t => ({ text: t.text.substring(0, 40), file: t.file, raw: (t as any).raw?.substring(0, 40) })));
   // 先用包含 name 的 raw 或 file 匹配
@@ -214,8 +214,8 @@ async function loadAll() {
       const raw = (t as any).raw || '';
       const pm = raw.match(/⏫|🔼|🔽/);
       return {
-        text: t.text.replace(/- \[ \] /, '').trim(),
-        done: false,
+        text: t.text.replace(/- \[[ x]\] /, '').trim(),
+        done: (t as any).done || false,
         priority: pm ? pm[0] : '',
         raw,
         file: t.file,

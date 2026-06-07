@@ -131,6 +131,10 @@ function registerIpc() {
         return await vaultService.getAllOpenTasks();
     });
 
+    ipcMain.handle('vault:getAllTasks', async () => {
+        return await vaultService.getAllTasks();
+    });
+
     // Git
     ipcMain.handle('git:status', async () => await gitService.status());
     ipcMain.handle('git:pull', async () => await gitService.pull());
