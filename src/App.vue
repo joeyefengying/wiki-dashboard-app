@@ -12,17 +12,12 @@
           <span v-else>📋</span>
         </div>
 
-        <!-- 内层：项目返回 + 专属菜单 -->
+        <!-- 内层：项目专属菜单（无返回，返回入口在内容区顶部） -->
         <template v-if="projStore.projName && !collapsed">
-          <div style="padding: 8px 12px; font-size: 13px; font-weight: 600; color: var(--wd-accent, #cf7a4c); cursor: pointer" @click="exitProject">
-            ← {{ projStore.projName }}
-          </div>
           <a-menu v-model:selectedKeys="selectedKeys" mode="inline" :theme="isDark ? 'dark' : 'light'" @click="onMenuClick">
             <a-menu-item key="/tasks"><CheckSquareOutlined /><span>任务</span></a-menu-item>
             <a-menu-item key="/capture"><EditOutlined /><span>速记</span></a-menu-item>
             <a-menu-item key="/projects"><FolderOutlined /><span>项目</span></a-menu-item>
-            <a-menu-divider />
-            <a-menu-item key="/"><AppstoreOutlined /><span>返回概览</span></a-menu-item>
           </a-menu>
         </template>
 
@@ -73,6 +68,16 @@
       </a-layout-sider>
       <a-layout :style="{ background: isDark ? '#141414' : '#f5f5f5' }">
         <a-layout-content style="padding: 24px; overflow-y: auto" :style="{ paddingBottom: consoleVisible ? '260px' : '24px' }">
+
+          <!-- 项目上下文 Bar（内层时显示） -->
+          <div v-if="projStore.projName" style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid #f0f0f0">
+            <a-button size="small" type="text" @click="exitProject">
+              <ArrowLeftOutlined /> 返回
+            </a-button>
+            <FolderOutlined style="color: #faad14" />
+            <span style="font-weight: 600">{{ projStore.projName }}</span>
+          </div>
+
           <router-view />
         </a-layout-content>
       </a-layout>
@@ -102,7 +107,7 @@ import zhCN from 'ant-design-vue/es/locale/zh_CN';
 import { useProjectStore } from '@/stores/project';
 import {
   AppstoreOutlined, CheckSquareOutlined, EditOutlined,
-  FolderOutlined, ThunderboltOutlined, SettingOutlined, BulbOutlined,
+  FolderOutlined, ThunderboltOutlined, SettingOutlined, BulbOutlined, ArrowLeftOutlined,
 } from '@ant-design/icons-vue';
 
 const router = useRouter();
@@ -199,10 +204,6 @@ function exitProject() {
 }
 
 function onMenuClick({ key }: { key: string }) {
-  if (projStore.projName && key === '/') {
-    // 在内层点"返回概览"时退出项目
-    projStore.selectProject('');
-  }
   router.push(key);
 }
 </script>
