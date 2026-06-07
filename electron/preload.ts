@@ -11,6 +11,7 @@ const api = {
         buildProjectTree: () => ipcRenderer.invoke('vault:buildProjectTree'),
         createProject: (path: string, readme: string) => ipcRenderer.invoke('vault:createProject', path, readme),
         moveProject: (from: string, to: string) => ipcRenderer.invoke('vault:moveProject', from, to),
+        deleteProject: (path: string) => ipcRenderer.invoke('vault:deleteProject', path),
         searchTasks: (pattern: string) => ipcRenderer.invoke('vault:searchTasks', pattern),
         getDailyPath: () => ipcRenderer.invoke('vault:getDailyPath'),
         ensureDailyFile: () => ipcRenderer.invoke('vault:ensureDailyFile'),

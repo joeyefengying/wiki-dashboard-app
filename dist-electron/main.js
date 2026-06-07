@@ -8,8 +8,8 @@ var VaultService = class {
 	constructor(root) {
 		this.root = root || VAULT_ROOT;
 	}
-	setRoot(path$7) {
-		this.root = path$7;
+	setRoot(path$8) {
+		this.root = path$8;
 	}
 	vaultPath(relative) {
 		return (0, path.join)(this.root, relative).replace(/\\/g, "/");
@@ -45,27 +45,27 @@ var VaultService = class {
 			};
 		}).sort((a, b) => b.mtime - a.mtime).slice(0, limit);
 	}
-	async readFile(path$8) {
-		return (0, fs.readFileSync)(this.vaultPath(path$8), "utf-8");
+	async readFile(path$9) {
+		return (0, fs.readFileSync)(this.vaultPath(path$9), "utf-8");
 	}
-	async writeFile(path$9, content) {
-		const full = this.vaultPath(path$9);
+	async writeFile(path$10, content) {
+		const full = this.vaultPath(path$10);
 		(0, fs.mkdirSync)((0, path.dirname)(full), { recursive: true });
 		(0, fs.writeFileSync)(full, content, "utf-8");
 	}
-	async appendFile(path$10, content) {
-		const full = this.vaultPath(path$10);
+	async appendFile(path$11, content) {
+		const full = this.vaultPath(path$11);
 		(0, fs.mkdirSync)((0, path.dirname)(full), { recursive: true });
 		(0, fs.appendFileSync)(full, content, "utf-8");
 	}
-	async listDir(path$11) {
-		const full = this.vaultPath(path$11);
+	async listDir(path$12) {
+		const full = this.vaultPath(path$12);
 		if (!(0, fs.existsSync)(full)) return [];
 		return (0, fs.readdirSync)(full).map((name) => {
 			const stat = (0, fs.statSync)((0, path.join)(full, name));
 			return {
 				name,
-				path: (path$11 + "/" + name).replace(/\\/g, "/").replace(/\/+/g, "/"),
+				path: (path$12 + "/" + name).replace(/\\/g, "/").replace(/\/+/g, "/"),
 				mtime: stat.mtimeMs,
 				size: stat.size,
 				isDir: stat.isDirectory()
@@ -93,8 +93,24 @@ var VaultService = class {
 		}
 		return nodes.sort((a, b) => a.name.localeCompare(b.name));
 	}
-	async createProject(path$12, readme) {
-		await this.writeFile(path$12 + "/README.md", readme);
+	async createProject(path$13, readme) {
+		await this.writeFile(path$13 + "/README.md", readme);
+	}
+	async deleteProject(path$14) {
+		const full = this.vaultPath(path$14);
+		if ((0, fs.existsSync)(full)) {
+			const files = this.walkFiles(full);
+			for (const f of files.reverse()) try {
+				(0, fs.rmdirSync)(f, { recursive: true });
+			} catch {
+				try {
+					require("fs").unlinkSync(f);
+				} catch {}
+			}
+			try {
+				(0, fs.rmdirSync)(full);
+			} catch {}
+		}
 	}
 	async moveProject(from, to) {
 		const fromFull = this.vaultPath(from);
@@ -132,14 +148,14 @@ var VaultService = class {
 		return `周期笔记/${y}/Daily/${m}/${y}-${m}-${String(now.getDate()).padStart(2, "0")}.md`;
 	}
 	async ensureDailyFile() {
-		const path$13 = this.getDailyPath();
-		if ((0, fs.existsSync)(this.vaultPath(path$13))) return path$13;
-		await this.writeFile(path$13, `## 项目列表\n\n## 日常记录\n\n## 习惯打卡\n\n## 今日完成\n`);
-		return path$13;
+		const path$15 = this.getDailyPath();
+		if ((0, fs.existsSync)(this.vaultPath(path$15))) return path$15;
+		await this.writeFile(path$15, `## 项目列表\n\n## 日常记录\n\n## 习惯打卡\n\n## 今日完成\n`);
+		return path$15;
 	}
 	async getTasks(dailyPath) {
-		const path$14 = dailyPath || this.getDailyPath();
-		const full = this.vaultPath(path$14);
+		const path$16 = dailyPath || this.getDailyPath();
+		const full = this.vaultPath(path$16);
 		if (!(0, fs.existsSync)(full)) return [];
 		const content = (0, fs.readFileSync)(full, "utf-8");
 		return this.parseTasks(content);
@@ -310,6 +326,9 @@ function registerIpc() {
 	electron.ipcMain.handle("vault:moveProject", async (_event, from, to) => {
 		return await vaultService.moveProject(from, to);
 	});
+	electron.ipcMain.handle("vault:deleteProject", async (_event, path$6) => {
+		return await vaultService.deleteProject(path$6);
+	});
 	electron.ipcMain.handle("vault:searchTasks", async (_event, pattern) => {
 		return await vaultService.searchTasks(pattern);
 	});
@@ -337,8 +356,8 @@ function registerIpc() {
 	electron.ipcMain.handle("vault:getEnabledPlugins", async () => {
 		return await vaultService.getEnabledPlugins();
 	});
-	electron.ipcMain.handle("vault:openFile", async (_event, path$6) => {
-		const full = vaultService.vaultPath(path$6);
+	electron.ipcMain.handle("vault:openFile", async (_event, path$7) => {
+		const full = vaultService.vaultPath(path$7);
 		return await electron.shell.openPath(full);
 	});
 	electron.ipcMain.handle("vault:getAllOpenTasks", async () => {

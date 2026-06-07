@@ -28,17 +28,26 @@
         >
           <template #title="{ name, fileCount, path }">
             <a-dropdown :trigger="['contextmenu']">
-              <span style="display: inline-flex; align-items: center; gap: 8px; padding: 2px 0">
-                <FolderOutlined style="color: #faad14" />
-                <span>{{ name }}</span>
-                <a-tag color="default" style="font-size: 10px">{{ fileCount }} 文件</a-tag>
-              </span>
+              <div style="display: flex; align-items: center; gap: 8px; width: 100%">
+                <span style="display: inline-flex; align-items: center; gap: 6px; flex: 1">
+                  <FolderOutlined style="color: #faad14" />
+                  <span>{{ name }}</span>
+                  <a-tag color="default" style="font-size: 10px">{{ fileCount }} 文件</a-tag>
+                </span>
+                <a-space :size="4" style="flex-shrink: 0" @click.stop>
+                  <a-button size="small" type="link" @click.stop="handleMenu('open', path)">打开</a-button>
+                  <a-button size="small" type="link" @click.stop="handleMenu('addChild', path)">+子</a-button>
+                  <a-button size="small" type="link" danger @click.stop="handleMenu('delete', path)">删除</a-button>
+                  <a-button size="small" type="link" @click.stop="handleMenu('archive', path)">归档</a-button>
+                </a-space>
+              </div>
               <template #overlay>
                 <a-menu @click="({ key }: { key: string }) => handleMenu(key, path)">
                   <a-menu-item key="open">📄 打开 README</a-menu-item>
                   <a-menu-item key="addChild">➕ 添加子项目</a-menu-item>
                   <a-menu-divider />
-                  <a-menu-item key="archive" danger>🗃 归档</a-menu-item>
+                  <a-menu-item key="archive">🗃 归档</a-menu-item>
+                  <a-menu-item key="delete" danger>🗑 删除</a-menu-item>
                 </a-menu>
               </template>
             </a-dropdown>
@@ -151,6 +160,20 @@ function handleMenu(key: string, path: string) {
           const name = path.split('/').pop()!;
           await api.vault.moveProject(path, `PARA 管理/4. 存档/${name}`);
           message.success('已归档');
+          await loadTree();
+        },
+      });
+      break;
+    case 'delete':
+      Modal.confirm({
+        title: '确认删除',
+        content: `永久删除「${path.split('/').pop()}」及其所有子文件？此操作不可撤销。`,
+        okText: '删除',
+        okType: 'danger',
+        cancelText: '取消',
+        onOk: async () => {
+          await api.vault.deleteProject(path);
+          message.success('已删除');
           await loadTree();
         },
       });

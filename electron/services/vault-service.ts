@@ -147,6 +147,22 @@ export class VaultService {
         await this.writeFile(path + '/README.md', readme);
     }
 
+    async deleteProject(path: string): Promise<void> {
+        const full = this.vaultPath(path);
+        if (existsSync(full)) {
+            const files = this.walkFiles(full);
+            for (const f of files.reverse()) {
+                try { rmdirSync(f, { recursive: true } as any); } catch {
+                    try { 
+                        // @ts-ignore
+                        require('fs').unlinkSync(f); 
+                    } catch { /* ignore */ }
+                }
+            }
+            try { rmdirSync(full); } catch { /* ignore */ }
+        }
+    }
+
     async moveProject(from: string, to: string): Promise<void> {
         const fromFull = this.vaultPath(from);
         const toFull = this.vaultPath(to);

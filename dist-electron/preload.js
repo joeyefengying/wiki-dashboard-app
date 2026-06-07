@@ -10,6 +10,7 @@ electron.contextBridge.exposeInMainWorld("electronAPI", { vault: {
 	buildProjectTree: () => electron.ipcRenderer.invoke("vault:buildProjectTree"),
 	createProject: (path, readme) => electron.ipcRenderer.invoke("vault:createProject", path, readme),
 	moveProject: (from, to) => electron.ipcRenderer.invoke("vault:moveProject", from, to),
+	deleteProject: (path) => electron.ipcRenderer.invoke("vault:deleteProject", path),
 	searchTasks: (pattern) => electron.ipcRenderer.invoke("vault:searchTasks", pattern),
 	getDailyPath: () => electron.ipcRenderer.invoke("vault:getDailyPath"),
 	ensureDailyFile: () => electron.ipcRenderer.invoke("vault:ensureDailyFile"),

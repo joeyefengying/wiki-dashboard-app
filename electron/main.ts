@@ -71,6 +71,10 @@ function registerIpc() {
         return await vaultService.moveProject(from, to);
     });
 
+    ipcMain.handle('vault:deleteProject', async (_event, path: string) => {
+        return await vaultService.deleteProject(path);
+    });
+
     ipcMain.handle('vault:searchTasks', async (_event, pattern: string) => {
         return await vaultService.searchTasks(pattern);
     });
