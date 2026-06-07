@@ -26,9 +26,9 @@ export class CliService {
     }
 
     async openClaudeTerminal(prompt: string): Promise<void> {
-        const promptFile = this.savePrompt(prompt);
-        // 用 start 打开新终端窗口，type 命令显示 prompt，然后启动 claude
-        const cmd = `start "Claude Code" cmd /k "cd /d ${this.vaultRoot} && type "${promptFile}" && echo. && echo 粘贴上面的命令到claude中 && echo. && claude"`;
+        // 用 PowerShell 打开新窗口
+        const psCmd = `Set-Location '${this.vaultRoot}'; Write-Host '正在启动 Claude Code...' -ForegroundColor Cyan; Write-Host ''; claude`;
+        const cmd = `start "Claude Code" powershell -NoExit -Command "[Console]::OutputEncoding=[Text.Encoding]::UTF8; ${psCmd}"`;
         const { exec } = require('child_process');
         return new Promise((resolve) => {
             exec(cmd, { windowsHide: false }, () => resolve());

@@ -5323,8 +5323,7 @@ var CliService = class {
 		return filePath;
 	}
 	async openClaudeTerminal(prompt) {
-		const promptFile = this.savePrompt(prompt);
-		const cmd = `start "Claude Code" cmd /k "cd /d ${this.vaultRoot} && type "${promptFile}" && echo. && echo 粘贴上面的命令到claude中 && echo. && claude"`;
+		const cmd = `start "Claude Code" powershell -NoExit -Command "[Console]::OutputEncoding=[Text.Encoding]::UTF8; ${`Set-Location '${this.vaultRoot}'; Write-Host '正在启动 Claude Code...' -ForegroundColor Cyan; Write-Host ''; claude`}"`;
 		const { exec } = require("child_process");
 		return new Promise((resolve) => {
 			exec(cmd, { windowsHide: false }, () => resolve());
