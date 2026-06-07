@@ -3,7 +3,6 @@
     <a-page-header :title="projName" @back="router.back()" style="padding: 0 0 8px 0">
       <template #tags>
         <a-tag>{{ fileCount }} 文件</a-tag>
-        <a-tag color="blue">{{ tasks.length }} 待办</a-tag>
       </template>
     </a-page-header>
 
