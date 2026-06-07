@@ -6,7 +6,7 @@
     </div>
 
     <!-- 子项目筛选（项目模式时） -->
-    <a-space v-if="projPath && subProjects.length > 0" style="margin-bottom: 8px" align="center">
+    <a-space v-if="showSubFilter !== false && projPath && subProjects.length > 0" style="margin-bottom: 8px" align="center">
       <span style="font-size: 12px; color: #999">子项目：</span>
       <a-select v-model:value="subFilter" style="width: 180px" size="small" placeholder="全部" allow-clear @change="loadAll">
         <a-select-option value="">全部</a-select-option>
@@ -67,7 +67,7 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { message } from 'ant-design-vue';
 
-const props = defineProps<{ projPath?: string }>();
+const props = defineProps<{ projPath?: string; showSubFilter?: boolean }>();
 const emit = defineEmits<{ (e: 'preview', path: string): void }>();
 
 const api = window.electronAPI;

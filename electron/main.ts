@@ -66,8 +66,8 @@ function registerIpc() {
         return await vaultService.listDir(path);
     });
 
-    ipcMain.handle('vault:buildProjectTree', async () => {
-        return await vaultService.buildProjectTree();
+    ipcMain.handle('vault:buildProjectTree', async (_event, dirPath?: string) => {
+        return await vaultService.buildProjectTree(dirPath);
     });
 
     ipcMain.handle('vault:createProject', async (_event, path: string, readme: string) => {

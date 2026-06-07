@@ -28,8 +28,8 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import TaskPanel from '@/components/TaskPanel.vue';
-import FilePreview from '@/components/FilePreview.vue';
+import TaskPanel from '@/components/task-panel/index.vue';
+import FilePreview from '@/components/file-preview/index.vue';
 import { useProjectStore } from '@/stores/project';
 
 const projStore = useProjectStore();

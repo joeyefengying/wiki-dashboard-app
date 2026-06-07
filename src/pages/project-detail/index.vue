@@ -1,5 +1,21 @@
 <template>
   <div>
+    <!-- 面包屑导航 -->
+    <ProjectBreadcrumb :project-path="projPath" />
+
+    <!-- 快捷消化 -->
+    <div v-if="digestVisible" style="margin-bottom: 10px; display: flex; gap: 8px; align-items: center">
+      <a-input v-model:value="digestUrl" placeholder="粘贴 URL 消化到当前项目…" size="small" style="flex: 1" @pressEnter="digestUrl && doDigest('exec')" allow-clear />
+      <a-button size="small" type="primary" @click="doDigest('exec')" :loading="digesting">▶ 消化</a-button>
+      <a-button size="small" @click="doDigest('copy')">📋 复制命令</a-button>
+      <a-button size="small" type="text" @click="digestVisible = false" style="color: #999">✕</a-button>
+    </div>
+    <div v-else style="margin-bottom: 10px">
+      <a-button size="small" type="dashed" @click="digestVisible = true">
+        <PlusOutlined /> 消化到「{{ projName }}」
+      </a-button>
+    </div>
+
     <a-page-header :title="projName" @back="router.back()" style="padding: 0 0 8px 0">
       <template #tags>
         <a-tag>{{ fileCount }} 文件</a-tag>
@@ -9,7 +25,7 @@
     <a-tabs v-model:activeKey="activeTab">
       <!-- Tab 1: 任务 -->
       <a-tab-pane key="tasks" tab="任务">
-        <TaskPanel :proj-path="projPath" @preview="onFilePreview" />
+        <TaskPanel :proj-path="projPath" :show-sub-filter="false" @preview="onFilePreview" />
       </a-tab-pane>
 
       <!-- Tab 2: 速记 -->
@@ -76,18 +92,22 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, inject } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { marked } from 'marked';
 import { message } from 'ant-design-vue';
-import { FolderOpenOutlined, DeleteOutlined } from '@ant-design/icons-vue';
-import TaskPanel from '@/components/TaskPanel.vue';
-import FilePreview from '@/components/FilePreview.vue';
+import { FolderOpenOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons-vue';
+import TaskPanel from '@/components/task-panel/index.vue';
+import FilePreview from '@/components/file-preview/index.vue';
+import ProjectBreadcrumb from '@/components/project-breadcrumb/index.vue';
+import { useProjectStore } from '@/stores/project';
 import type { FileInfo } from '@/types/electron';
 
 const router = useRouter();
 const route = useRoute();
 const api = window.electronAPI;
+const projStore = useProjectStore();
+const consoleApi = inject<any>('console', {});
 
 const projPath = computed(() => decodeURIComponent(route.params.path as string));
 const projName = computed(() => projPath.value.split('/').pop() || '');
@@ -114,14 +134,16 @@ const previewVisible = ref(false);
 const previewPath = ref('');
 const newChildName = ref('');
 
-const taskColumns = [
-  { title: '', dataIndex: 'done', key: 'done', width: 40 },
-  { title: '任务', dataIndex: 'text', key: 'text', ellipsis: true },
-  { title: '优先级', dataIndex: 'priority', key: 'priority', width: 60 },
-  { title: '来源', dataIndex: 'file', key: 'file', width: 120, ellipsis: true },
-];
+// 快捷消化
+const digestVisible = ref(false);
+const digestUrl = ref('');
+const digesting = ref(false);
 
-onMounted(async () => { await loadAll(); });
+onMounted(async () => {
+  // 同步 store
+  projStore.selectProject(projPath.value);
+  await loadAll();
+});
 
 function onFilePreview(path: string) {
   previewPath.value = path;
@@ -130,7 +152,6 @@ function onFilePreview(path: string) {
 
 async function loadAll() {
   const p = projPath.value;
-  const name = projName.value;
 
   // 介绍
   try {
@@ -182,6 +203,7 @@ async function addChild() {
   await api.vault.createProject(path, `# ${name}\n\n## 目标\n\n## 任务\n\n## 记录\n`);
   newChildName.value = '';
   message.success(`子项目「${name}」已创建`);
+  await projStore.refreshTree();
   await loadAll();
 }
 
@@ -190,6 +212,7 @@ async function deleteChild(path: string) {
   if (!confirm(`确认删除「${name}」？`)) return;
   await api.vault.deleteProject(path);
   message.success('已删除');
+  await projStore.refreshTree();
   await loadAll();
 }
 
@@ -198,6 +221,33 @@ function onCaptureKey(e: KeyboardEvent) {
     e.preventDefault();
     saveCapture();
   }
+}
+
+// ── 快捷消化 ──
+async function doDigest(mode: 'exec' | 'copy') {
+  const url = digestUrl.value.trim();
+  if (!url) { message.warning('请先输入 URL'); return; }
+
+  if (mode === 'copy') {
+    const cmd = `/llm-wiki 消化 ${url}`;
+    await navigator.clipboard.writeText(cmd);
+    message.success('命令已复制到剪贴板');
+    return;
+  }
+
+  // 后台执行模式
+  const prompt = `请用 llm-wiki 消化这篇文章到项目「${projName.value}」：${url}`;
+  if (consoleApi) {
+    consoleApi.showConsole?.();
+    consoleApi.consoleLines.value = [];
+    consoleApi.cliRunning.value = true;
+  }
+  digesting.value = true;
+  (window as any).electronAPI?.cli?.exec(prompt);
+  digestUrl.value = '';
+  digestVisible.value = false;
+  message.success('已提交消化任务，查看底部控制台');
+  setTimeout(() => { digesting.value = false; }, 1000);
 }
 </script>
 

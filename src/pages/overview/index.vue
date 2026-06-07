@@ -80,7 +80,7 @@
 import { ref, onMounted, reactive, inject } from 'vue';
 import { useRouter } from 'vue-router';
 import { message } from 'ant-design-vue';
-import FilePreview from '@/components/FilePreview.vue';
+import FilePreview from '@/components/file-preview/index.vue';
 import { useProjectStore } from '@/stores/project';
 import type { VaultStats, FileInfo } from '@/types/electron';
 

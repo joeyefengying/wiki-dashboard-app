@@ -38,7 +38,7 @@ export interface ElectronAPI {
         writeFile(path: string, content: string): Promise<void>;
         appendFile(path: string, content: string): Promise<void>;
         listDir(path: string): Promise<FileInfo[]>;
-        buildProjectTree(): Promise<TreeNode[]>;
+        buildProjectTree(dirPath?: string): Promise<TreeNode[]>;
         createProject(path: string, readme: string): Promise<void>;
         moveProject(from: string, to: string): Promise<void>;
         searchTasks(pattern: string): Promise<Array<{ text: string; file: string }>>;
