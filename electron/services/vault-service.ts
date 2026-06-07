@@ -52,8 +52,9 @@ export class VaultService {
         const files = this.walkFiles(this.root);
         console.log('[VaultService] getStats: root=', this.root, 'total files=', files.length);
         let entities = 0, topics = 0, sources = 0, synthesis = 0;
+        const rootNorm = this.root.replace(/\\/g, '/');
         for (const f of files) {
-            const rel = f.replace(this.root + '/', '').replace(/\\/g, '/');
+            const rel = f.replace(/\\/g, '/').replace(rootNorm + '/', '');
             if (rel.startsWith('wiki/entities/')) entities++;
             else if (rel.startsWith('wiki/topics/')) topics++;
             else if (rel.startsWith('wiki/sources/')) sources++;
@@ -65,11 +66,12 @@ export class VaultService {
     // ── 最近文件 ──
 
     async getRecentFiles(limit: number): Promise<FileInfo[]> {
+        const rootNorm = this.root.replace(/\\/g, '/');
         const files = this.walkFiles(this.root)
             .filter(f => f.endsWith('.md'))
             .map(f => {
                 const stat = statSync(f);
-                const rel = f.replace(this.root + '/', '').replace(/\\/g, '/');
+                const rel = f.replace(/\\/g, '/').replace(rootNorm + '/', '');
                 return {
                     name: basename(f, '.md'),
                     path: rel,
@@ -186,6 +188,7 @@ export class VaultService {
 
     async searchTasks(pattern: string): Promise<Array<{ text: string; file: string }>> {
         const results: Array<{ text: string; file: string }> = [];
+        const rootNorm = this.root.replace(/\\/g, '/');
         const mdFiles = this.walkFiles(this.root)
             .filter(f => f.endsWith('.md') && !f.includes('.obsidian') && !f.includes('raw/'));
         for (const f of mdFiles.slice(0, 200)) {
@@ -194,7 +197,7 @@ export class VaultService {
             const matches = content.match(regex);
             if (matches) {
                 for (const m of matches) {
-                    results.push({ text: m.trim(), file: f.replace(this.root + '/', '').replace(/\\/g, '/') });
+                    results.push({ text: m.trim(), file: f.replace(/\\/g, '/').replace(rootNorm + '/', '') });
                 }
             }
             if (results.length >= 30) break;
@@ -322,6 +325,7 @@ export class VaultService {
 
     async getAllOpenTasks(): Promise<Array<{ text: string; file: string }>> {
         const results: Array<{ text: string; file: string }> = [];
+        const rootNorm = this.root.replace(/\\/g, '/');
         const mdFiles = this.walkFiles(this.root)
             .filter(f => f.endsWith('.md') && !f.includes('.obsidian') && !f.includes('raw/'));
         for (const f of mdFiles.slice(0, 250)) {
@@ -331,7 +335,7 @@ export class VaultService {
                 if (line.match(/^\s*- \[ \] /)) {
                     results.push({
                         text: line.trim().replace(/- \[ \] /, ''),
-                        file: f.replace(this.root + '/', '').replace(/\\/g, '/'),
+                        file: f.replace(/\\/g, '/').replace(rootNorm + '/', ''),
                     });
                 }
             }

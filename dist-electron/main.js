@@ -45,8 +45,9 @@ var VaultService = class {
 		const files = this.walkFiles(this.root);
 		console.log("[VaultService] getStats: root=", this.root, "total files=", files.length);
 		let entities = 0, topics = 0, sources = 0, synthesis = 0;
+		const rootNorm = this.root.replace(/\\/g, "/");
 		for (const f of files) {
-			const rel = f.replace(this.root + "/", "").replace(/\\/g, "/");
+			const rel = f.replace(/\\/g, "/").replace(rootNorm + "/", "");
 			if (rel.startsWith("wiki/entities/")) entities++;
 			else if (rel.startsWith("wiki/topics/")) topics++;
 			else if (rel.startsWith("wiki/sources/")) sources++;
@@ -61,9 +62,10 @@ var VaultService = class {
 		};
 	}
 	async getRecentFiles(limit) {
+		const rootNorm = this.root.replace(/\\/g, "/");
 		return this.walkFiles(this.root).filter((f) => f.endsWith(".md")).map((f) => {
 			const stat = (0, fs.statSync)(f);
-			const rel = f.replace(this.root + "/", "").replace(/\\/g, "/");
+			const rel = f.replace(/\\/g, "/").replace(rootNorm + "/", "");
 			return {
 				name: (0, path.basename)(f, ".md"),
 				path: rel,
@@ -156,6 +158,7 @@ var VaultService = class {
 	}
 	async searchTasks(pattern) {
 		const results = [];
+		const rootNorm = this.root.replace(/\\/g, "/");
 		const mdFiles = this.walkFiles(this.root).filter((f) => f.endsWith(".md") && !f.includes(".obsidian") && !f.includes("raw/"));
 		for (const f of mdFiles.slice(0, 200)) {
 			const content = (0, fs.readFileSync)(f, "utf-8");
@@ -163,7 +166,7 @@ var VaultService = class {
 			const matches = content.match(regex);
 			if (matches) for (const m of matches) results.push({
 				text: m.trim(),
-				file: f.replace(this.root + "/", "").replace(/\\/g, "/")
+				file: f.replace(/\\/g, "/").replace(rootNorm + "/", "")
 			});
 			if (results.length >= 30) break;
 		}
@@ -275,12 +278,13 @@ var VaultService = class {
 	}
 	async getAllOpenTasks() {
 		const results = [];
+		const rootNorm = this.root.replace(/\\/g, "/");
 		const mdFiles = this.walkFiles(this.root).filter((f) => f.endsWith(".md") && !f.includes(".obsidian") && !f.includes("raw/"));
 		for (const f of mdFiles.slice(0, 250)) {
 			const lines = (0, fs.readFileSync)(f, "utf-8").split("\n");
 			for (const line of lines) if (line.match(/^\s*- \[ \] /)) results.push({
 				text: line.trim().replace(/- \[ \] /, ""),
-				file: f.replace(this.root + "/", "").replace(/\\/g, "/")
+				file: f.replace(/\\/g, "/").replace(rootNorm + "/", "")
 			});
 			if (results.length >= 40) break;
 		}
