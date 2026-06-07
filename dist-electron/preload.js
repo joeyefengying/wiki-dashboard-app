@@ -21,6 +21,7 @@ electron.contextBridge.exposeInMainWorld("electronAPI", { vault: {
 	searchAllTasks: (pattern) => electron.ipcRenderer.invoke("vault:searchAllTasks", pattern),
 	getEnabledPlugins: () => electron.ipcRenderer.invoke("vault:getEnabledPlugins"),
 	openFile: (path) => electron.ipcRenderer.invoke("vault:openFile", path),
+	openExternal: (uri) => electron.ipcRenderer.invoke("vault:openExternal", uri),
 	getAllOpenTasks: () => electron.ipcRenderer.invoke("vault:getAllOpenTasks")
 } });
 //#endregion

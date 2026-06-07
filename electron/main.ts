@@ -116,6 +116,10 @@ function registerIpc() {
         return await shell.openPath(full);
     });
 
+    ipcMain.handle('vault:openExternal', async (_event, uri: string) => {
+        return await shell.openExternal(uri);
+    });
+
     ipcMain.handle('vault:getAllOpenTasks', async () => {
         return await vaultService.getAllOpenTasks();
     });

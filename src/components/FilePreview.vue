@@ -62,11 +62,12 @@ function openExternal() {
   api.vault.openFile(props.filePath);
 }
 
-function openInObsidian() {
-  const vaultName = encodeURIComponent('obsidian-wiki');
-  const file = encodeURIComponent(props.filePath);
-  const uri = `obsidian://open?vault=${vaultName}&file=${file}`;
-  window.open(uri, '_blank');
+async function openInObsidian() {
+  const vault = 'obsidian-wiki';
+  const file = props.filePath;
+  // Obsidian URI: vault 名和 file 路径都需要编码
+  const uri = `obsidian://open?vault=${encodeURIComponent(vault)}&file=${encodeURIComponent(file)}`;
+  await api.vault.openExternal(uri);
 }
 </script>
 

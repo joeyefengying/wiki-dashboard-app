@@ -22,6 +22,7 @@ const api = {
         searchAllTasks: (pattern: string) => ipcRenderer.invoke('vault:searchAllTasks', pattern),
         getEnabledPlugins: () => ipcRenderer.invoke('vault:getEnabledPlugins'),
         openFile: (path: string) => ipcRenderer.invoke('vault:openFile', path),
+        openExternal: (uri: string) => ipcRenderer.invoke('vault:openExternal', uri),
         getAllOpenTasks: () => ipcRenderer.invoke('vault:getAllOpenTasks'),
     },
 };

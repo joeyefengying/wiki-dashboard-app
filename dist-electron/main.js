@@ -361,6 +361,9 @@ function registerIpc() {
 		const full = vaultService.vaultPath(path$7);
 		return await electron.shell.openPath(full);
 	});
+	electron.ipcMain.handle("vault:openExternal", async (_event, uri) => {
+		return await electron.shell.openExternal(uri);
+	});
 	electron.ipcMain.handle("vault:getAllOpenTasks", async () => {
 		return await vaultService.getAllOpenTasks();
 	});
