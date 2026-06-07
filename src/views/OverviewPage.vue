@@ -78,9 +78,14 @@ const consoleApi = inject<any>('console', {});
 
 onMounted(async () => {
   try {
+    console.log('[Overview] calling getStats...');
     const s = await api.vault.getStats();
+    console.log('[Overview] getStats result:', s);
     Object.assign(stats, s);
     recentFiles.value = await api.vault.recentFiles(10);
+  } catch (e: any) {
+    console.error('[Overview] error:', e);
+    message.error(`数据加载失败：${e?.message || e}`);
   } finally {
     loading.value = false;
   }
