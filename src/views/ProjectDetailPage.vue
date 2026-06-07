@@ -35,6 +35,9 @@
             <template v-else-if="column.key === 'text'">
               <span :style="{ textDecoration: record.done ? 'line-through' : 'none' }">{{ record.text }}</span>
             </template>
+            <template v-else-if="column.key === 'file'">
+              <a @click="previewPath = record.file; previewVisible = true" style="font-size: 12px">{{ record.file }}</a>
+            </template>
           </template>
         </a-table>
         <a-empty v-if="tasks.length === 0" description="暂无任务" />
@@ -150,7 +153,7 @@ const taskColumns = [
   { title: '', dataIndex: 'done', key: 'done', width: 40 },
   { title: '任务', dataIndex: 'text', key: 'text', ellipsis: true },
   { title: '优先级', dataIndex: 'priority', key: 'priority', width: 60 },
-  { title: '来源', dataIndex: 'file', key: 'file', width: 100, ellipsis: true },
+  { title: '来源', dataIndex: 'file', key: 'file', width: 120, ellipsis: true },
 ];
 
 onMounted(async () => { await loadAll(); });
