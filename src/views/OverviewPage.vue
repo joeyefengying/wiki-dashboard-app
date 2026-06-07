@@ -22,7 +22,7 @@
       <a-spin :spinning="projLoading">
         <a-row :gutter="12" v-if="projects.length > 0">
           <a-col :span="8" v-for="p in projects" :key="p.path" style="margin-bottom: 12px">
-            <a-card size="small" hoverable @click="router.push('/project/' + encodeURIComponent(p.path))">
+            <a-card size="small" hoverable @click="openProject(p.path)">
               <a-card-meta :title="p.name">
                 <template #description>
                   <span style="font-size: 12px; color: #999">{{ p.fileCount ?? '...' }} 文件</span>
@@ -81,6 +81,7 @@ import { ref, onMounted, reactive, inject } from 'vue';
 import { useRouter } from 'vue-router';
 import { message } from 'ant-design-vue';
 import FilePreview from '@/components/FilePreview.vue';
+import { useProjectStore } from '@/stores/project';
 import type { VaultStats, FileInfo } from '@/types/electron';
 
 const router = useRouter();
@@ -89,6 +90,7 @@ const api = window.electronAPI;
 const stats = reactive<VaultStats>({ entities: 0, topics: 0, sources: 0, synthesis: 0, totalFiles: 0 });
 const projects = ref<Array<{ name: string; path: string; fileCount: number }>>([]);
 const projLoading = ref(false);
+const projStore = useProjectStore();
 const recentFiles = ref<FileInfo[]>([]);
 const digestUrl = ref('');
 const loading = ref(true);
@@ -173,6 +175,11 @@ async function digest(type: string) {
 
   await navigator.clipboard.writeText(cmd);
   message.success('命令已复制到剪贴板');
+}
+
+function openProject(path: string) {
+  projStore.selectProject(path);
+  router.push('/tasks');
 }
 
 function openFile(path: string) {

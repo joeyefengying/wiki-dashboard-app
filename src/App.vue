@@ -11,6 +11,25 @@
           <span v-if="!collapsed">📋 Wiki Dashboard</span>
           <span v-else>📋</span>
         </div>
+
+        <!-- 项目切换 -->
+        <div v-if="!collapsed" style="padding: 8px 12px">
+          <a-select
+            v-model:value="projStore.currentPath"
+            style="width: 100%"
+            placeholder="选择项目…"
+            size="small"
+            allow-clear
+            show-search
+            option-filter-prop="label"
+            @change="onProjectChange"
+          >
+            <a-select-option value="" label="全部（无项目）">📋 全部（无项目）</a-select-option>
+            <a-select-option v-for="p in projStore.projects" :key="p.path" :value="p.path" :label="p.name">{{ p.name }}</a-select-option>
+          </a-select>
+        </div>
+        <a-divider v-if="!collapsed" style="margin: 4px 0" />
+
         <a-menu
           v-model:selectedKeys="selectedKeys"
           mode="inline"
@@ -18,8 +37,17 @@
           @click="onMenuClick"
         >
           <a-menu-item key="/"><AppstoreOutlined /><span>概览</span></a-menu-item>
-          <a-menu-item key="/tasks"><CheckSquareOutlined /><span>任务</span></a-menu-item>
-          <a-menu-item key="/capture"><EditOutlined /><span>速记</span></a-menu-item>
+          <a-menu-item key="/tasks">
+            <CheckSquareOutlined />
+            <span>任务</span>
+            <a-tag v-if="projStore.projName && !collapsed" color="blue" style="font-size: 10px; margin-left: 4px">{{ projStore.projName }}</a-tag>
+          </a-menu-item>
+          <a-menu-item key="/capture">
+            <EditOutlined />
+            <span>速记</span>
+            <a-tag v-if="projStore.projName && !collapsed" color="blue" style="font-size: 10px; margin-left: 4px">{{ projStore.projName }}</a-tag>
+          </a-menu-item>
+          <a-menu-divider />
           <a-menu-item key="/projects"><FolderOutlined /><span>项目</span></a-menu-item>
           <a-menu-item key="/capabilities"><ThunderboltOutlined /><span>能力</span></a-menu-item>
           <a-menu-item key="/settings"><SettingOutlined /><span>设置</span></a-menu-item>
@@ -71,6 +99,7 @@ import { ref, watch, computed, provide } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { theme, message } from 'ant-design-vue';
 import zhCN from 'ant-design-vue/es/locale/zh_CN';
+import { useProjectStore } from '@/stores/project';
 import {
   AppstoreOutlined, CheckSquareOutlined, EditOutlined,
   FolderOutlined, ThunderboltOutlined, SettingOutlined, BulbOutlined,
@@ -79,6 +108,9 @@ import {
 const router = useRouter();
 const route = useRoute();
 const collapsed = ref(false);
+const projStore = useProjectStore();
+
+projStore.loadProjects();
 const selectedKeys = ref<string[]>([route.path]);
 const isDark = ref(window.matchMedia('(prefers-color-scheme: dark)').matches);
 const gitStatus = ref<any>(null);
@@ -155,6 +187,10 @@ const themeConfig = computed(() => ({
     borderRadius: 4,
   },
 }));
+
+function onProjectChange() {
+  // 项目切换后保持在当前页，数据自动响应
+}
 
 function onMenuClick({ key }: { key: string }) {
   router.push(key);
