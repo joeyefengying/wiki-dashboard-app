@@ -5312,7 +5312,10 @@ var CliService = class {
 	*/
 	execClaudeLive(prompt, onOutput, onDone) {
 		if (this.activeProcess) this.activeProcess.kill();
-		const proc = (0, child_process.spawn)(`claude`, ["-p", prompt], {
+		const cmd = `claude`;
+		const args = ["-p", prompt];
+		console.log("[CliService] spawning:", cmd, args.slice(0, 1));
+		const proc = (0, child_process.spawn)(cmd, args, {
 			cwd: this.vaultRoot,
 			shell: true,
 			windowsHide: true,
@@ -5331,10 +5334,12 @@ var CliService = class {
 			for (const line of lines) if (line.trim()) onOutput(`[err] ${line}`);
 		});
 		proc.on("close", (code) => {
+			console.log("[CliService] process closed, code:", code);
 			this.activeProcess = null;
 			onDone(code);
 		});
 		proc.on("error", (err) => {
+			console.error("[CliService] spawn error:", err);
 			onOutput(`[error] ${err.message}`);
 			this.activeProcess = null;
 			onDone(-1);

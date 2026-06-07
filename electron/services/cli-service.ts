@@ -23,6 +23,7 @@ export class CliService {
 
         const cmd = `claude`;
         const args = ['-p', prompt];
+        console.log('[CliService] spawning:', cmd, args.slice(0, 1));
 
         const proc = spawn(cmd, args, {
             cwd: this.vaultRoot,
@@ -48,11 +49,13 @@ export class CliService {
         });
 
         proc.on('close', (code) => {
+            console.log('[CliService] process closed, code:', code);
             this.activeProcess = null;
             onDone(code);
         });
 
         proc.on('error', (err) => {
+            console.error('[CliService] spawn error:', err);
             onOutput(`[error] ${err.message}`);
             this.activeProcess = null;
             onDone(-1);
