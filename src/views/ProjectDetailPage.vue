@@ -23,7 +23,7 @@
 
         <a-table
           :columns="taskColumns"
-          :data-source="tasks"
+          :data-source="openTasks"
           :pagination="false"
           size="small"
           row-key="raw"
@@ -42,7 +42,23 @@
             </template>
           </template>
         </a-table>
-        <a-empty v-if="tasks.length === 0" description="暂无任务" />
+        <a-empty v-if="openTasks.length === 0" description="暂无任务" />
+
+        <!-- 已完成任务 -->
+        <a-collapse v-if="doneTasks.length > 0" style="margin-top: 8px" :bordered="false">
+          <a-collapse-panel :header="`已完成（${doneTasks.length}）`" key="done">
+            <a-table :columns="taskColumns" :data-source="doneTasks" :pagination="false" size="small" row-key="raw">
+              <template #bodyCell="{ column, record }">
+                <template v-if="column.key === 'done'">
+                  <a-checkbox :checked="true" @change="toggleTask(record)" />
+                </template>
+                <template v-else-if="column.key === 'text'">
+                  <span style="text-decoration: line-through; color: #999">{{ record.text }}</span>
+                </template>
+              </template>
+            </a-table>
+          </a-collapse-panel>
+        </a-collapse>
       </a-tab-pane>
 
       <!-- Tab 2: 速记 -->
@@ -130,6 +146,8 @@ const activeTab = ref('tasks');
 const newTaskText = ref('');
 const taskFilter = ref('');
 const tasks = ref<any[]>([]);
+const openTasks = computed(() => tasks.value.filter(t => !t.done));
+const doneTasks = computed(() => tasks.value.filter(t => t.done));
 
 // 速记
 const captureContent = ref('');
@@ -230,7 +248,9 @@ async function toggleTask(task: any) {
     ? task.raw.replace(/- \[x\]/, '- [ ]')
     : task.raw.replace(/- \[ \]/, '- [x]');
   await api.vault.writeFile(task.file, content.replace(task.raw, toggled));
-  await loadAll();
+  // 本地更新状态，不重新加载整个列表
+  task.done = !task.done;
+  task.raw = toggled;
 }
 
 // ── 速记 ──
