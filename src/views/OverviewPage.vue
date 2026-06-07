@@ -103,8 +103,15 @@ async function digest(type: string) {
     // 直接执行模式 → 打开底部控制台
     let input = digestUrl.value.trim();
     if (!input) { message.warning('请先输入 URL'); return; }
-    // 如果用户粘贴了完整命令，直接使用；否则拼接
-    const prompt = input.startsWith('/llm-wiki') ? input : `/llm-wiki 消化 ${input}`;
+    // 智能去重：处理各种输入格式
+    if (input.startsWith('/llm-wiki')) {
+      // 已是完整命令，直接使用
+    } else if (input.startsWith('消化 ')) {
+      input = `/llm-wiki ${input}`;
+    } else {
+      input = `/llm-wiki 消化 ${input}`;
+    }
+    const prompt = input;
     if (consoleApi) {
       consoleApi.showConsole?.();
       consoleApi.consoleLines.value = [];
