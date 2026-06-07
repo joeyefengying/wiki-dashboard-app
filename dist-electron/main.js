@@ -283,7 +283,10 @@ var VaultService = class {
 		const mdFiles = allWalk.filter((f) => f.endsWith(".md") && !f.includes(".obsidian") && !f.includes("raw/"));
 		console.log("[getAllOpenTasks] walkFiles total:", allWalk.length, "mdFiles:", mdFiles.length);
 		const sorted = [...mdFiles].sort((a, b) => {
-			return (a.includes("周期笔记") ? 0 : 1) - (b.includes("周期笔记") ? 0 : 1);
+			const aPeriod = a.includes("周期笔记") ? 0 : 1;
+			const bPeriod = b.includes("周期笔记") ? 0 : 1;
+			if (aPeriod !== bPeriod) return aPeriod - bPeriod;
+			return b.localeCompare(a);
 		});
 		for (const f of sorted) {
 			const lines = (0, fs.readFileSync)(f, "utf-8").split("\n");

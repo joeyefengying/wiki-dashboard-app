@@ -330,11 +330,13 @@ export class VaultService {
         const mdFiles = allWalk
             .filter(f => f.endsWith('.md') && !f.includes('.obsidian') && !f.includes('raw/'));
         console.log('[getAllOpenTasks] walkFiles total:', allWalk.length, 'mdFiles:', mdFiles.length);
-        // 优先扫描周期笔记，再扫其他
+        // 优先扫描周期笔记（最新在前），再扫其他
         const sorted = [...mdFiles].sort((a, b) => {
             const aPeriod = a.includes('周期笔记') ? 0 : 1;
             const bPeriod = b.includes('周期笔记') ? 0 : 1;
-            return aPeriod - bPeriod;
+            if (aPeriod !== bPeriod) return aPeriod - bPeriod;
+            // 同类型内按路径倒序（新文件在前）
+            return b.localeCompare(a);
         });
         for (const f of sorted) {
             const content = readFileSync(f, 'utf-8');
