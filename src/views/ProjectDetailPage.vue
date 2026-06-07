@@ -44,7 +44,7 @@
         </a-table>
 
         <!-- 已完成任务 -->
-        <a-collapse v-if="doneTasks.length > 0" style="margin-top: 8px" :bordered="false">
+        <a-collapse v-show="doneTasks.length > 0" style="margin-top: 8px" :bordered="false">
           <a-collapse-panel :header="`已完成（${doneTasks.length}）`" key="done">
             <a-table :columns="taskColumns" :data-source="doneTasks" :pagination="false" size="small" row-key="raw">
               <template #bodyCell="{ column, record }">
