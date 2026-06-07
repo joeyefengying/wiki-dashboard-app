@@ -326,8 +326,10 @@ export class VaultService {
     async getAllOpenTasks(): Promise<Array<{ text: string; file: string }>> {
         const results: Array<{ text: string; file: string }> = [];
         const rootNorm = this.root.replace(/\\/g, '/');
-        const mdFiles = this.walkFiles(this.root)
+        const allWalk = this.walkFiles(this.root);
+        const mdFiles = allWalk
             .filter(f => f.endsWith('.md') && !f.includes('.obsidian') && !f.includes('raw/'));
+        console.log('[getAllOpenTasks] walkFiles total:', allWalk.length, 'mdFiles:', mdFiles.length);
         for (const f of mdFiles.slice(0, 250)) {
             const content = readFileSync(f, 'utf-8');
             const lines = content.split('\n');

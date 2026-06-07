@@ -279,7 +279,9 @@ var VaultService = class {
 	async getAllOpenTasks() {
 		const results = [];
 		const rootNorm = this.root.replace(/\\/g, "/");
-		const mdFiles = this.walkFiles(this.root).filter((f) => f.endsWith(".md") && !f.includes(".obsidian") && !f.includes("raw/"));
+		const allWalk = this.walkFiles(this.root);
+		const mdFiles = allWalk.filter((f) => f.endsWith(".md") && !f.includes(".obsidian") && !f.includes("raw/"));
+		console.log("[getAllOpenTasks] walkFiles total:", allWalk.length, "mdFiles:", mdFiles.length);
 		for (const f of mdFiles.slice(0, 250)) {
 			const lines = (0, fs.readFileSync)(f, "utf-8").split("\n");
 			for (const line of lines) if (line.match(/^\s*- \[ \] /)) results.push({
