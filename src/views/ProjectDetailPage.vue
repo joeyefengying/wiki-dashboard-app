@@ -205,10 +205,16 @@ async function loadAll() {
   // 全部加载，优先级筛选交给客户端 computed
   tasks.value = allTasks
     .filter(t => {
-      const inText = t.text.includes(name);
-      const inFile = t.file.includes(name);
-      const inRaw = (t as any).raw?.includes(name);
-      return inText || inFile || inRaw;
+      const raw = (t as any).raw || '';
+      const text = t.text || '';
+      const file = t.file || '';
+      // 1. 带 🗂 项目关联标记 且 包含项目名
+      if (raw.includes('🗂') && (raw.includes(name) || text.includes(name))) return true;
+      // 2. 文件在项目目录下
+      if (file.startsWith(projPath.value + '/')) return true;
+      // 3. 日报中的任务 且 包含项目名
+      if (file.startsWith('周期笔记/') && (raw.includes(name) || text.includes(name))) return true;
+      return false;
     })
     .map(t => {
       const raw = (t as any).raw || '';
