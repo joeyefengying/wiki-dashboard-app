@@ -73,6 +73,7 @@ const previewVisible = ref(false);
 const previewPath = ref('');
 const execLoading = ref(false);
 const execResult = ref('');
+const consoleApi = inject<any>('console', {});
 
 onMounted(async () => {
   try {
@@ -103,9 +104,8 @@ async function digest(type: string) {
     const url = digestUrl.value.trim();
     if (!url) { message.warning('请先输入 URL'); return; }
     const prompt = `/llm-wiki 消化 ${url}`;
-    const consoleApi = inject<any>('console');
     if (consoleApi) {
-      consoleApi.showConsole();
+      consoleApi.showConsole?.();
       consoleApi.consoleLines.value = [];
       consoleApi.cliRunning.value = true;
     }

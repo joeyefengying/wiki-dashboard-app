@@ -50,7 +50,7 @@
       </a-layout>
 
       <!-- 底部控制台 -->
-      <div v-if="consoleVisible" style="position: fixed; bottom: 0; left: 200px; right: 0; height: 240px; background: #1e1e1e; border-top: 1px solid #333; z-index: 100; display: flex; flex-direction: column">
+      <div v-if="consoleVisible" :style="{ position: 'fixed', bottom: 0, left: collapsed ? '80px' : '200px', right: 0, height: '240px', background: '#1e1e1e', borderTop: '1px solid #333', zIndex: 100, display: 'flex', flexDirection: 'column' }">
         <div style="display: flex; align-items: center; justify-content: space-between; padding: 4px 12px; background: #2d2d2d">
           <span style="color: #ccc; font-size: 12px">控制台</span>
           <a-space :size="4">
