@@ -9,6 +9,7 @@ const router = createRouter({
         { path: '/projects', name: 'projects', component: () => import('@/views/ProjectsPage.vue') },
         { path: '/capabilities', name: 'capabilities', component: () => import('@/views/CapabilitiesPage.vue') },
         { path: '/settings', name: 'settings', component: () => import('@/views/SettingsPage.vue') },
+        { path: '/project/:path(.*)', name: 'projectDetail', component: () => import('@/views/ProjectDetailPage.vue') },
     ],
 });
 

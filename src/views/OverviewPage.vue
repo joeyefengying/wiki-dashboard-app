@@ -17,6 +17,24 @@
       </a-col>
     </a-row>
 
+    <!-- 活跃项目 -->
+    <a-card title="活跃项目" size="small" style="margin-top: 16px">
+      <a-spin :spinning="projLoading">
+        <a-row :gutter="12" v-if="projects.length > 0">
+          <a-col :span="8" v-for="p in projects" :key="p.path" style="margin-bottom: 12px">
+            <a-card size="small" hoverable @click="router.push('/project/' + encodeURIComponent(p.path))">
+              <a-card-meta :title="p.name">
+                <template #description>
+                  <span style="font-size: 12px; color: #999">{{ p.fileCount ?? '...' }} 文件</span>
+                </template>
+              </a-card-meta>
+            </a-card>
+          </a-col>
+        </a-row>
+        <a-empty v-else description="暂无项目" />
+      </a-spin>
+    </a-card>
+
     <!-- 快速消化 -->
     <a-card title="⚡ 快速消化" style="margin-top: 16px">
       <a-space direction="vertical" style="width: 100%">
@@ -60,13 +78,17 @@
 
 <script setup lang="ts">
 import { ref, onMounted, reactive, inject } from 'vue';
+import { useRouter } from 'vue-router';
 import { message } from 'ant-design-vue';
 import FilePreview from '@/components/FilePreview.vue';
 import type { VaultStats, FileInfo } from '@/types/electron';
 
+const router = useRouter();
 const api = window.electronAPI;
 
 const stats = reactive<VaultStats>({ entities: 0, topics: 0, sources: 0, synthesis: 0, totalFiles: 0 });
+const projects = ref<Array<{ name: string; path: string; fileCount: number }>>([]);
+const projLoading = ref(false);
 const recentFiles = ref<FileInfo[]>([]);
 const digestUrl = ref('');
 const loading = ref(true);
@@ -83,6 +105,15 @@ onMounted(async () => {
     console.log('[Overview] getStats result:', s);
     Object.assign(stats, s);
     recentFiles.value = await api.vault.recentFiles(10);
+
+    // 活跃项目
+    projLoading.value = true;
+    const projDirs = await api.vault.listDir('PARA 管理/1. 项目');
+    projects.value = await Promise.all(projDirs.filter(d => d.isDir).map(async d => {
+      const entries = await api.vault.listDir(d.path);
+      return { name: d.name, path: d.path, fileCount: entries.length };
+    }));
+    projLoading.value = false;
   } catch (e: any) {
     console.error('[Overview] error:', e);
     message.error(`数据加载失败：${e?.message || e}`);
