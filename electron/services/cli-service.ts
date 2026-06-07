@@ -22,18 +22,24 @@ export class CliService {
         }
 
         const cmd = `claude`;
-        const args = ['-p', prompt];
-        console.log('[CliService] spawning:', cmd, args.slice(0, 1));
+        const args: string[] = [];  // 不用 -p，通过 stdin 传入
+        console.log('[CliService] spawning:', cmd, 'with stdin prompt');
 
         const proc = spawn(cmd, args, {
             cwd: this.vaultRoot,
             shell: true,
             windowsHide: true,
             env: { ...process.env, FORCE_COLOR: '0' },
-            stdio: ['ignore', 'pipe', 'pipe'], // 关闭 stdin，避免 claude 等待输入
+            stdio: ['pipe', 'pipe', 'pipe'], // stdin 用于传入 prompt
         });
 
         this.activeProcess = proc;
+
+        // 立即写入 prompt 并关闭 stdin
+        if (proc.stdin) {
+            proc.stdin.write(prompt + '\n');
+            proc.stdin.end();
+        }
 
         proc.stdout.on('data', (data: Buffer) => {
             const lines = data.toString().split('\n');

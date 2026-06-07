@@ -5313,8 +5313,8 @@ var CliService = class {
 	execClaudeLive(prompt, onOutput, onDone) {
 		if (this.activeProcess) this.activeProcess.kill();
 		const cmd = `claude`;
-		const args = ["-p", prompt];
-		console.log("[CliService] spawning:", cmd, args.slice(0, 1));
+		const args = [];
+		console.log("[CliService] spawning:", cmd, "with stdin prompt");
 		const proc = (0, child_process.spawn)(cmd, args, {
 			cwd: this.vaultRoot,
 			shell: true,
@@ -5324,12 +5324,16 @@ var CliService = class {
 				FORCE_COLOR: "0"
 			},
 			stdio: [
-				"ignore",
+				"pipe",
 				"pipe",
 				"pipe"
 			]
 		});
 		this.activeProcess = proc;
+		if (proc.stdin) {
+			proc.stdin.write(prompt + "\n");
+			proc.stdin.end();
+		}
 		proc.stdout.on("data", (data) => {
 			const lines = data.toString().split("\n");
 			for (const line of lines) if (line.trim()) onOutput(line);
