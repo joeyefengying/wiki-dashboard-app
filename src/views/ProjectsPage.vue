@@ -34,11 +34,11 @@
                   <span>{{ name }}</span>
                   <a-tag color="default" style="font-size: 10px">{{ fileCount }} 文件</a-tag>
                 </span>
-                <a-space :size="4" style="flex-shrink: 0" @click.stop>
-                  <a-button size="small" type="link" @click.stop="handleMenu('open', path)">打开</a-button>
-                  <a-button size="small" type="link" @click.stop="handleMenu('addChild', path)">+子</a-button>
-                  <a-button size="small" type="link" danger @click.stop="handleMenu('delete', path)">删除</a-button>
-                  <a-button size="small" type="link" @click.stop="handleMenu('archive', path)">归档</a-button>
+                <a-space :size="2" style="flex-shrink: 0" @click.stop>
+                  <a-button size="small" type="link" @click.stop="handleMenu('open', path)"><FolderOpenOutlined /></a-button>
+                  <a-button size="small" type="link" @click.stop="handleMenu('addChild', path)"><PlusOutlined /></a-button>
+                  <a-button size="small" type="link" danger @click.stop="handleMenu('delete', path)"><DeleteOutlined /></a-button>
+                  <a-button size="small" type="link" @click.stop="handleMenu('archive', path)"><InboxOutlined /></a-button>
                 </a-space>
               </div>
               <template #overlay>
@@ -72,7 +72,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { message, Modal } from 'ant-design-vue';
-import { FolderOutlined } from '@ant-design/icons-vue';
+import { FolderOutlined, FolderOpenOutlined, PlusOutlined, DeleteOutlined, InboxOutlined } from '@ant-design/icons-vue';
 import type { TreeNode } from '@/types/electron';
 
 const api = window.electronAPI;
