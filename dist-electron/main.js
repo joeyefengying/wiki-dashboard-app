@@ -12,6 +12,7 @@ var VaultService = class {
 		this.root = path$8;
 	}
 	vaultPath(relative) {
+		if (/^[a-zA-Z]:[/\\]/.test(relative)) return relative.replace(/\\/g, "/");
 		return (0, path.join)(this.root, relative).replace(/\\/g, "/");
 	}
 	async getStats() {

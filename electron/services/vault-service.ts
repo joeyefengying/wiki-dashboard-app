@@ -39,6 +39,10 @@ export class VaultService {
     }
 
     vaultPath(relative: string): string {
+        // 如果已经是绝对路径（含盘符），直接返回
+        if (/^[a-zA-Z]:[/\\]/.test(relative)) {
+            return relative.replace(/\\/g, '/');
+        }
         return join(this.root, relative).replace(/\\/g, '/');
     }
 
