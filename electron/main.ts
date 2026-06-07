@@ -84,6 +84,22 @@ function registerIpc() {
     ipcMain.handle('vault:getActiveProjects', async () => {
         return await vaultService.getActiveProjects();
     });
+
+    ipcMain.handle('vault:getTasks', async (_event, dailyPath?: string) => {
+        return await vaultService.getTasks(dailyPath);
+    });
+
+    ipcMain.handle('vault:appendToSection', async (_event, dailyPath: string, section: string, line: string) => {
+        return await vaultService.appendToSection(dailyPath, section, line);
+    });
+
+    ipcMain.handle('vault:toggleTask', async (_event, dailyPath: string, raw: string, done: boolean) => {
+        return await vaultService.toggleTask(dailyPath, raw, done);
+    });
+
+    ipcMain.handle('vault:searchAllTasks', async (_event, pattern: string) => {
+        return await vaultService.searchTasks(pattern);
+    });
 }
 
 app.whenReady().then(() => {

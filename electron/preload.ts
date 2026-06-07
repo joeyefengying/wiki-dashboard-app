@@ -15,6 +15,10 @@ const api = {
         getDailyPath: () => ipcRenderer.invoke('vault:getDailyPath'),
         ensureDailyFile: () => ipcRenderer.invoke('vault:ensureDailyFile'),
         getActiveProjects: () => ipcRenderer.invoke('vault:getActiveProjects'),
+        getTasks: (dailyPath?: string) => ipcRenderer.invoke('vault:getTasks', dailyPath),
+        appendToSection: (dailyPath: string, section: string, line: string) => ipcRenderer.invoke('vault:appendToSection', dailyPath, section, line),
+        toggleTask: (dailyPath: string, raw: string, done: boolean) => ipcRenderer.invoke('vault:toggleTask', dailyPath, raw, done),
+        searchAllTasks: (pattern: string) => ipcRenderer.invoke('vault:searchAllTasks', pattern),
     },
 };
 

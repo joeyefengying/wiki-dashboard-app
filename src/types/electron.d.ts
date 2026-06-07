@@ -22,6 +22,14 @@ export interface TreeNode {
     isDir: boolean;
 }
 
+export interface ParsedTask {
+    text: string;
+    done: boolean;
+    priority: string;
+    due: string;
+    raw: string;
+}
+
 export interface ElectronAPI {
     vault: {
         getStats(): Promise<VaultStats>;
@@ -37,6 +45,10 @@ export interface ElectronAPI {
         getDailyPath(): Promise<string>;
         ensureDailyFile(): Promise<string>;
         getActiveProjects(): Promise<FileInfo[]>;
+        getTasks(dailyPath?: string): Promise<ParsedTask[]>;
+        appendToSection(dailyPath: string, section: string, line: string): Promise<void>;
+        toggleTask(dailyPath: string, raw: string, done: boolean): Promise<void>;
+        searchAllTasks(pattern: string): Promise<Array<{ text: string; file: string }>>;
     };
 }
 
