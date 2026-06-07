@@ -124,7 +124,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { marked } from 'marked';
 import { message } from 'ant-design-vue';
@@ -176,6 +176,9 @@ const taskColumns = [
 ];
 
 onMounted(async () => { await loadAll(); });
+
+// 筛选切换时重新过滤
+watch(taskFilter, () => { loadAll(); });
 
 async function loadAll() {
   const p = projPath.value;
