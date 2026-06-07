@@ -199,6 +199,10 @@ function exitProject() {
 }
 
 function onMenuClick({ key }: { key: string }) {
+  if (projStore.projName && key === '/') {
+    // 在内层点"返回概览"时退出项目
+    projStore.selectProject('');
+  }
   router.push(key);
 }
 </script>
