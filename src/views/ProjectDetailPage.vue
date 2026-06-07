@@ -172,8 +172,16 @@ async function loadAll() {
 
   // 任务
   const allTasks = await api.vault.getAllOpenTasks();
+  console.log('[loadAll] allTasks count:', allTasks.length, 'name:', name);
+  if (allTasks.length > 0) console.log('[loadAll] sample:', allTasks.slice(0, 3).map(t => ({ text: t.text.substring(0, 40), file: t.file, raw: (t as any).raw?.substring(0, 40) })));
+  // 先用包含 name 的 raw 或 file 匹配
   tasks.value = allTasks
-    .filter(t => t.text.includes(name) || t.file.includes(name) || (t as any).raw?.includes(name))
+    .filter(t => {
+      const inText = t.text.includes(name);
+      const inFile = t.file.includes(name);
+      const inRaw = (t as any).raw?.includes(name);
+      return inText || inFile || inRaw;
+    })
     .filter(t => {
       if (!taskFilter.value) return true;
       return (t as any).raw?.includes(taskFilter.value) || t.text.includes(taskFilter.value);
