@@ -42,7 +42,6 @@
             </template>
           </template>
         </a-table>
-        <a-empty v-if="openTasks.length === 0" description="暂无任务" />
 
         <!-- 已完成任务 -->
         <a-collapse v-if="doneTasks.length > 0" style="margin-top: 8px" :bordered="false">
