@@ -10,16 +10,14 @@
     <a-tabs v-model:activeKey="activeTab">
       <!-- Tab 1: 任务 -->
       <a-tab-pane key="tasks" tab="任务">
-        <!-- 优先级筛选 -->
-        <a-radio-group v-model:value="taskFilter" button-style="solid" size="small" style="margin-bottom: 8px">
-          <a-radio-button value="">全部</a-radio-button>
-          <a-radio-button value="⏫">⏫ 高</a-radio-button>
-          <a-radio-button value="🔼">🔼 中</a-radio-button>
-          <a-radio-button value="🔽">🔽 低</a-radio-button>
-        </a-radio-group>
-
-        <a-space style="margin-bottom: 12px">
-          <a-input v-model:value="newTaskText" :placeholder="taskFilter ? `添加${taskFilter}优先级任务…` : '添加任务…'" style="width: 280px" @pressEnter="addTask" />
+        <a-space style="margin-bottom: 12px" align="center">
+          <a-radio-group v-model:value="taskFilter" button-style="solid" size="small">
+            <a-radio-button value="">全部</a-radio-button>
+            <a-radio-button value="⏫">⏫ 高</a-radio-button>
+            <a-radio-button value="🔼">🔼 中</a-radio-button>
+            <a-radio-button value="🔽">🔽 低</a-radio-button>
+          </a-radio-group>
+          <a-input v-model:value="newTaskText" :placeholder="taskFilter ? `添加${taskFilter}优先级任务…` : '添加任务…'" style="width: 240px" @pressEnter="addTask" />
           <a-button type="primary" size="small" @click="addTask">添加</a-button>
         </a-space>
 
