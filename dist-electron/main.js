@@ -1,5 +1,6 @@
 import { BrowserWindow, app, ipcMain } from "electron";
 import { basename, dirname, join } from "path";
+import { fileURLToPath } from "url";
 import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, renameSync, rmdirSync, statSync, writeFileSync } from "fs";
 //#region electron/services/vault-service.ts
 var VAULT_ROOT = "E:/project/obsidian-wiki";
@@ -153,6 +154,7 @@ var VaultService = class {
 };
 //#endregion
 //#region electron/main.ts
+var __dirname = dirname(fileURLToPath(import.meta.url));
 var mainWindow = null;
 var vaultService = new VaultService();
 function createWindow() {

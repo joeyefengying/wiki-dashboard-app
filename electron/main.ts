@@ -1,6 +1,9 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
-import { join } from 'path';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import { VaultService } from './services/vault-service';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 let mainWindow: BrowserWindow | null = null;
 const vaultService = new VaultService();
