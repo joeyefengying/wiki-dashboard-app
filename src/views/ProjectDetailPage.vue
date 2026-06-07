@@ -10,54 +10,7 @@
     <a-tabs v-model:activeKey="activeTab">
       <!-- Tab 1: 任务 -->
       <a-tab-pane key="tasks" tab="任务">
-        <a-space style="margin-bottom: 12px" align="center">
-          <a-radio-group v-model:value="taskFilter" button-style="solid" size="small">
-            <a-radio-button value="">全部</a-radio-button>
-            <a-radio-button value="⏫">⏫ 高</a-radio-button>
-            <a-radio-button value="🔼">🔼 中</a-radio-button>
-            <a-radio-button value="🔽">🔽 低</a-radio-button>
-          </a-radio-group>
-          <a-input size="small" v-model:value="newTaskText" :placeholder="taskFilter ? `添加${taskFilter}优先级任务…` : '添加任务…'" style="width: 240px" @pressEnter="addTask" />
-          <a-button type="primary" size="small" @click="addTask">添加</a-button>
-        </a-space>
-
-        <a-table
-          :columns="taskColumns"
-          :data-source="openTasks"
-          :pagination="false"
-          size="small"
-          row-key="raw"
-        >
-          <template #bodyCell="{ column, record }">
-            <template v-if="column.key === 'done'">
-              <a-checkbox :checked="record.done" @change="toggleTask(record)" />
-            </template>
-            <template v-else-if="column.key === 'text'">
-              <span :style="{ textDecoration: record.done ? 'line-through' : 'none' }">{{ record.text }}</span>
-            </template>
-            <template v-else-if="column.key === 'file'">
-              <a-tooltip :title="record.file">
-                <a @click="previewPath = record.file; previewVisible = true" style="font-size: 12px">{{ record.file }}</a>
-              </a-tooltip>
-            </template>
-          </template>
-        </a-table>
-
-        <!-- 已完成任务 (调试: {{ doneTasks.length }}) -->
-        <a-collapse v-show="doneTasks.length > 0" style="margin-top: 8px" :bordered="false">
-          <a-collapse-panel :header="`已完成（${doneTasks.length}）`" key="done">
-            <a-table :columns="taskColumns" :data-source="doneTasks" :pagination="false" size="small" row-key="raw">
-              <template #bodyCell="{ column, record }">
-                <template v-if="column.key === 'done'">
-                  <a-checkbox :checked="true" @change="toggleTask(record)" />
-                </template>
-                <template v-else-if="column.key === 'text'">
-                  <span style="text-decoration: line-through; color: #999">{{ record.text }}</span>
-                </template>
-              </template>
-            </a-table>
-          </a-collapse-panel>
-        </a-collapse>
+        <TaskPanel :proj-path="projPath" @preview="onFilePreview" />
       </a-tab-pane>
 
       <!-- Tab 2: 速记 -->
@@ -124,11 +77,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { marked } from 'marked';
 import { message } from 'ant-design-vue';
 import { FolderOpenOutlined, DeleteOutlined } from '@ant-design/icons-vue';
+import TaskPanel from '@/components/TaskPanel.vue';
 import FilePreview from '@/components/FilePreview.vue';
 import type { FileInfo } from '@/types/electron';
 
@@ -140,13 +94,6 @@ const projPath = computed(() => decodeURIComponent(route.params.path as string))
 const projName = computed(() => projPath.value.split('/').pop() || '');
 
 const activeTab = ref('tasks');
-
-// 任务
-const newTaskText = ref('');
-const taskFilter = ref('');
-const tasks = ref<any[]>([]);
-const openTasks = computed(() => filteredTasks.value.filter(t => !t.done));
-const doneTasks = computed(() => tasks.value.filter(t => t.done)); // 已完成不过滤优先级，始终显示
 
 // 速记
 const captureContent = ref('');
@@ -177,10 +124,10 @@ const taskColumns = [
 
 onMounted(async () => { await loadAll(); });
 
-const filteredTasks = computed(() => {
-  if (!taskFilter.value) return tasks.value;
-  return tasks.value.filter(t => t.raw?.includes(taskFilter.value) || t.text.includes(taskFilter.value));
-});
+function onFilePreview(path: string) {
+  previewPath.value = path;
+  previewVisible.value = true;
+}
 
 async function loadAll() {
   const p = projPath.value;
@@ -197,68 +144,9 @@ async function loadAll() {
   files.value = await api.vault.listDir(p);
   fileCount.value = files.value.length;
 
-  // 任务
-  const allTasks = await api.vault.getAllTasks();
-  console.log('[loadAll] allTasks count:', allTasks.length, 'name:', name);
-  if (allTasks.length > 0) console.log('[loadAll] sample:', allTasks.slice(0, 3).map(t => ({ text: t.text.substring(0, 40), file: t.file, raw: (t as any).raw?.substring(0, 40) })));
-  // 先用包含 name 的 raw 或 file 匹配
-  // 全部加载，优先级筛选交给客户端 computed
-  tasks.value = allTasks
-    .filter(t => {
-      const raw = (t as any).raw || '';
-      const text = t.text || '';
-      const file = t.file || '';
-      // 1. 带 🗂 项目关联标记 且 包含项目名
-      if (raw.includes('🗂') && (raw.includes(name) || text.includes(name))) return true;
-      // 2. 文件在项目目录下
-      if (file.startsWith(projPath.value + '/')) return true;
-      // 3. 日报中的任务 且 包含项目名
-      if (file.startsWith('周期笔记/') && (raw.includes(name) || text.includes(name))) return true;
-      return false;
-    })
-    .map(t => {
-      const raw = (t as any).raw || '';
-      const pm = raw.match(/⏫|🔼|🔽/);
-      return {
-        text: t.text.replace(/- \[[ x]\] /, '').trim(),
-        done: (t as any).done || false,
-        priority: pm ? pm[0] : '',
-        raw,
-        file: t.file,
-      };
-    });
-
   // 子项目
   const dirs = files.value.filter(e => e.isDir);
   subProjects.value = dirs.map(d => ({ name: d.name, path: d.path, children: [], fileCount: 0, isDir: true }));
-}
-
-// ── 任务操作 ──
-
-async function addTask() {
-  const text = newTaskText.value.trim();
-  if (!text) return;
-  let line = `- [ ] ${text}`;
-  if (taskFilter.value) line += ` ${taskFilter.value}`;
-  line += ` 🗂 [[${projPath.value}/README|${projName.value}]]`;
-  const dailyPath = await api.vault.ensureDailyFile();
-  await api.vault.appendToSection(dailyPath, '日常记录', line);
-  newTaskText.value = '';
-  message.success('已添加');
-  await loadAll();
-}
-
-async function toggleTask(task: any) {
-  if (!task.file || !task.raw) return;
-  const content = await api.vault.readFile(task.file);
-  const toggled = task.done
-    ? task.raw.replace(/- \[x\]/, '- [ ]')
-    : task.raw.replace(/- \[ \]/, '- [x]');
-  await api.vault.writeFile(task.file, content.replace(task.raw, toggled));
-  // 本地更新状态，强制触发响应式
-  task.done = !task.done;
-  task.raw = toggled;
-  tasks.value = [...tasks.value]; // 强制 Vue 检测变更
 }
 
 // ── 速记 ──
