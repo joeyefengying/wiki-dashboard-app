@@ -50,6 +50,7 @@ export class VaultService {
 
     async getStats(): Promise<VaultStats> {
         const files = this.walkFiles(this.root);
+        console.log('[VaultService] getStats: root=', this.root, 'total files=', files.length);
         let entities = 0, topics = 0, sources = 0, synthesis = 0;
         for (const f of files) {
             const rel = f.replace(this.root + '/', '').replace(/\\/g, '/');
