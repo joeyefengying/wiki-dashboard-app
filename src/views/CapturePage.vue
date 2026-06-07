@@ -2,6 +2,15 @@
   <div>
     <h2 style="margin-bottom: 16px">速记</h2>
 
+    <!-- 项目筛选 -->
+    <a-space v-if="!selectedProj" style="margin-bottom: 12px" align="center">
+      <span style="font-size: 13px; color: #999">关联项目：</span>
+      <a-select v-model:value="filterProj" style="width: 220px" placeholder="无需关联" size="small" allow-clear show-search option-filter-prop="label">
+        <a-select-option value="" label="无">无需关联</a-select-option>
+        <a-select-option v-for="p in projStore.projects" :key="p.path" :value="p.path" :label="p.name">{{ p.name }}</a-select-option>
+      </a-select>
+    </a-space>
+
     <!-- 模板按钮 -->
     <div style="margin-bottom: 12px; display: flex; gap: 8px; align-items: center">
       <span style="font-size: 12px; color: #999">插入模板：</span>
@@ -38,10 +47,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { message } from 'ant-design-vue';
+import { useProjectStore } from '@/stores/project';
 
 const api = window.electronAPI;
+const projStore = useProjectStore();
+const selectedProj = computed(() => projStore.currentPath);
+const filterProj = ref('');
 
 const content = ref('');
 const tags = ref('');
@@ -87,6 +100,10 @@ async function save() {
     const tagStr = tags.value.trim();
     if (tagStr) {
       text += ' ' + tagStr.split(/[,，]/).map(t => t.trim()).filter(Boolean).map(t => `#${t}`).join(' ');
+    }
+    const projPath = selectedProj.value || filterProj.value;
+    if (projPath) {
+      text += `\n🗂 [[${projPath}/README|${projPath.split('/').pop()}]]`;
     }
     const now = new Date();
     const stamp = `> ${now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}`;
