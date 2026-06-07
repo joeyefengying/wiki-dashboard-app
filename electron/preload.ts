@@ -19,6 +19,7 @@ const api = {
         appendToSection: (dailyPath: string, section: string, line: string) => ipcRenderer.invoke('vault:appendToSection', dailyPath, section, line),
         toggleTask: (dailyPath: string, raw: string, done: boolean) => ipcRenderer.invoke('vault:toggleTask', dailyPath, raw, done),
         searchAllTasks: (pattern: string) => ipcRenderer.invoke('vault:searchAllTasks', pattern),
+        getEnabledPlugins: () => ipcRenderer.invoke('vault:getEnabledPlugins'),
     },
 };
 

@@ -264,6 +264,41 @@ export class VaultService {
         }).filter(Boolean) as ParsedTask[];
     }
 
+    // ── 插件能力 ──
+
+    async getEnabledPlugins(): Promise<Array<{ id: string; name: string; desc: string }>> {
+        const pluginsDir = join(this.root, '.obsidian/plugins');
+        if (!existsSync(pluginsDir)) return [];
+
+        // 读取 community-plugins.json
+        const configPath = join(this.root, '.obsidian/community-plugins.json');
+        let enabledIds: string[] = [];
+        if (existsSync(configPath)) {
+            try {
+                enabledIds = JSON.parse(readFileSync(configPath, 'utf-8'));
+            } catch { /* ignore */ }
+        }
+
+        // 读取每个插件的 manifest
+        const plugins: Array<{ id: string; name: string; desc: string }> = [];
+        const dirs = readdirSync(pluginsDir);
+        for (const dir of dirs) {
+            const manifestPath = join(pluginsDir, dir, 'manifest.json');
+            if (!existsSync(manifestPath)) continue;
+            try {
+                const manifest = JSON.parse(readFileSync(manifestPath, 'utf-8'));
+                if (enabledIds.includes(manifest.id)) {
+                    plugins.push({
+                        id: manifest.id,
+                        name: manifest.name,
+                        desc: manifest.description || '',
+                    });
+                }
+            } catch { /* ignore */ }
+        }
+        return plugins;
+    }
+
     // ── 工具 ──
 
     private walkFiles(dir: string): string[] {

@@ -100,6 +100,10 @@ function registerIpc() {
     ipcMain.handle('vault:searchAllTasks', async (_event, pattern: string) => {
         return await vaultService.searchTasks(pattern);
     });
+
+    ipcMain.handle('vault:getEnabledPlugins', async () => {
+        return await vaultService.getEnabledPlugins();
+    });
 }
 
 app.whenReady().then(() => {

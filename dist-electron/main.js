@@ -137,6 +137,98 @@ var VaultService = class {
 		await this.writeFile(path, `## 项目列表\n\n## 日常记录\n\n## 习惯打卡\n\n## 今日完成\n`);
 		return path;
 	}
+	async getTasks(dailyPath) {
+		const path = dailyPath || this.getDailyPath();
+		const full = this.vaultPath(path);
+		if (!existsSync(full)) return [];
+		const content = readFileSync(full, "utf-8");
+		return this.parseTasks(content);
+	}
+	async appendToSection(dailyPath, sectionName, line) {
+		const full = this.vaultPath(dailyPath);
+		if (!existsSync(full)) {
+			await this.writeFile(dailyPath, `## ${sectionName}\n\n${line}\n`);
+			return;
+		}
+		const lines = readFileSync(full, "utf-8").split("\n");
+		let sectionIdx = -1;
+		for (let i = 0; i < lines.length; i++) if (lines[i].trim() === `## ${sectionName}`) {
+			sectionIdx = i;
+			break;
+		}
+		if (sectionIdx === -1) {
+			await this.appendFile(dailyPath, `\n## ${sectionName}\n\n${line}\n`);
+			return;
+		}
+		let nextIdx = lines.length;
+		for (let i = sectionIdx + 1; i < lines.length; i++) if (lines[i].match(/^## /)) {
+			nextIdx = i;
+			break;
+		}
+		let insertIdx = nextIdx - 1;
+		while (insertIdx > sectionIdx && lines[insertIdx].trim() === "") insertIdx--;
+		insertIdx++;
+		lines.splice(insertIdx, 0, line);
+		writeFileSync(full, lines.join("\n"), "utf-8");
+	}
+	async toggleTask(dailyPath, raw, done) {
+		const full = this.vaultPath(dailyPath);
+		if (!existsSync(full)) return;
+		const content = readFileSync(full, "utf-8");
+		const toggled = done ? raw.replace(/- \[x\]/, "- [ ]") : raw.replace(/- \[ \]/, "- [x]");
+		writeFileSync(full, content.replace(raw, toggled), "utf-8");
+	}
+	parseTasks(content) {
+		return content.split("\n").map((line) => {
+			const m = line.match(/^\s*- \[(.)\] (.+)$/);
+			if (!m) return null;
+			const done = m[1] !== " ";
+			let rest = m[2].trim();
+			let priority = "";
+			let due = "";
+			const pm = rest.match(/^(⏫|🔼|🔽)\s*/);
+			if (pm) {
+				priority = pm[1];
+				rest = rest.slice(pm[0].length);
+			}
+			const dm = rest.match(/📅\s*(\d{4}-\d{2}-\d{2})/);
+			if (dm) {
+				due = dm[1];
+				rest = rest.replace(dm[0], "").trim();
+			}
+			return {
+				text: rest.trim(),
+				done,
+				priority,
+				due,
+				raw: line
+			};
+		}).filter(Boolean);
+	}
+	async getEnabledPlugins() {
+		const pluginsDir = join(this.root, ".obsidian/plugins");
+		if (!existsSync(pluginsDir)) return [];
+		const configPath = join(this.root, ".obsidian/community-plugins.json");
+		let enabledIds = [];
+		if (existsSync(configPath)) try {
+			enabledIds = JSON.parse(readFileSync(configPath, "utf-8"));
+		} catch {}
+		const plugins = [];
+		const dirs = readdirSync(pluginsDir);
+		for (const dir of dirs) {
+			const manifestPath = join(pluginsDir, dir, "manifest.json");
+			if (!existsSync(manifestPath)) continue;
+			try {
+				const manifest = JSON.parse(readFileSync(manifestPath, "utf-8"));
+				if (enabledIds.includes(manifest.id)) plugins.push({
+					id: manifest.id,
+					name: manifest.name,
+					desc: manifest.description || ""
+				});
+			} catch {}
+		}
+		return plugins;
+	}
 	walkFiles(dir) {
 		const results = [];
 		if (!existsSync(dir)) return results;
@@ -213,6 +305,21 @@ function registerIpc() {
 	});
 	ipcMain.handle("vault:getActiveProjects", async () => {
 		return await vaultService.getActiveProjects();
+	});
+	ipcMain.handle("vault:getTasks", async (_event, dailyPath) => {
+		return await vaultService.getTasks(dailyPath);
+	});
+	ipcMain.handle("vault:appendToSection", async (_event, dailyPath, section, line) => {
+		return await vaultService.appendToSection(dailyPath, section, line);
+	});
+	ipcMain.handle("vault:toggleTask", async (_event, dailyPath, raw, done) => {
+		return await vaultService.toggleTask(dailyPath, raw, done);
+	});
+	ipcMain.handle("vault:searchAllTasks", async (_event, pattern) => {
+		return await vaultService.searchTasks(pattern);
+	});
+	ipcMain.handle("vault:getEnabledPlugins", async () => {
+		return await vaultService.getEnabledPlugins();
 	});
 }
 app.whenReady().then(() => {

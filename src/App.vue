@@ -1,5 +1,5 @@
 <template>
-  <a-config-provider :theme="themeConfig">
+  <a-config-provider :theme="themeConfig" :locale="zhCN">
     <a-layout style="height: 100vh; overflow: hidden">
       <a-layout-sider
         v-model:collapsed="collapsed"
@@ -43,6 +43,7 @@
 import { ref, watch, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { theme } from 'ant-design-vue';
+import zhCN from 'ant-design-vue/es/locale/zh_CN';
 import {
   AppstoreOutlined, CheckSquareOutlined, EditOutlined,
   FolderOutlined, ThunderboltOutlined, SettingOutlined, BulbOutlined,
