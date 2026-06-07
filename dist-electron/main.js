@@ -5409,7 +5409,10 @@ function createWindow() {
 }
 function registerIpc() {
 	electron.ipcMain.handle("vault:stats", async () => {
-		return await vaultService.getStats();
+		console.log("[main] vault:stats called, root:", vaultService.root);
+		const result = await vaultService.getStats();
+		console.log("[main] vault:stats result:", JSON.stringify(result));
+		return result;
 	});
 	electron.ipcMain.handle("vault:recentFiles", async (_event, limit) => {
 		return await vaultService.getRecentFiles(limit);

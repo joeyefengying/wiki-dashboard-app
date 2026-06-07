@@ -40,7 +40,10 @@ function createWindow() {
 // IPC 注册
 function registerIpc() {
     ipcMain.handle('vault:stats', async () => {
-        return await vaultService.getStats();
+        console.log('[main] vault:stats called, root:', (vaultService as any).root);
+        const result = await vaultService.getStats();
+        console.log('[main] vault:stats result:', JSON.stringify(result));
+        return result;
     });
 
     ipcMain.handle('vault:recentFiles', async (_event, limit: number) => {
