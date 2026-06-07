@@ -5,6 +5,15 @@
       <span style="font-weight: 600">📋 全部任务</span>
     </div>
 
+    <!-- 子项目筛选（项目模式时） -->
+    <a-space v-if="projPath && subProjects.length > 0" style="margin-bottom: 8px" align="center">
+      <span style="font-size: 12px; color: #999">子项目：</span>
+      <a-select v-model:value="subFilter" style="width: 180px" size="small" placeholder="全部" allow-clear @change="loadAll">
+        <a-select-option value="">全部</a-select-option>
+        <a-select-option v-for="s in subProjects" :key="s.path" :value="s.path">{{ s.name }}</a-select-option>
+      </a-select>
+    </a-space>
+
     <!-- 优先级筛选 -->
     <a-radio-group v-model:value="taskFilter" button-style="solid" size="small" style="margin-bottom: 8px">
       <a-radio-button value="">全部</a-radio-button>
@@ -66,6 +75,8 @@ const projName = computed(() => props.projPath?.split('/').pop() || '');
 
 const newTaskText = ref('');
 const taskFilter = ref('');
+const subFilter = ref('');
+const subProjects = ref<Array<{ name: string; path: string }>>([]);
 const tasks = ref<any[]>([]);
 
 const openTasks = computed(() => filteredTasks.value.filter(t => !t.done));
@@ -84,11 +95,18 @@ const columns = [
 ];
 
 onMounted(() => loadAll());
-watch(() => props.projPath, () => loadAll());
+watch(() => props.projPath, () => { subProjects.value = []; loadAll(); });
 
 async function loadAll() {
+  // 加载子项目列表
+  if (props.projPath) {
+    const dirs = await api.vault.listDir(props.projPath);
+    subProjects.value = dirs.filter((d: any) => d.isDir).map((d: any) => ({ name: d.name, path: d.path }));
+  }
+
   const allTasks = await api.vault.getAllTasks();
   const name = projName.value;
+  const filterPath = subFilter.value || props.projPath;
 
   if (props.projPath) {
     // 项目模式：过滤关联任务
@@ -97,8 +115,10 @@ async function loadAll() {
         const raw = (t as any).raw || '';
         const text = t.text || '';
         const file = t.file || '';
+        // 子项目筛选：raw 中包含子项目路径
+        if (subFilter.value && !raw.includes(subFilter.value)) return false;
         if (raw.includes('🗂') && (raw.includes(name) || text.includes(name))) return true;
-        if (file.startsWith(props.projPath! + '/')) return true;
+        if (file.startsWith(filterPath! + '/')) return true;
         if (file.startsWith('周期笔记/') && (raw.includes(name) || text.includes(name))) return true;
         return false;
       })
@@ -126,7 +146,8 @@ async function addTask() {
   if (!text) return;
   let line = `- [ ] ${text}`;
   if (taskFilter.value) line += ` ${taskFilter.value}`;
-  if (props.projPath) line += ` 🗂 [[${props.projPath}/README|${projName.value}]]`;
+  const targetPath = subFilter.value || props.projPath;
+  if (targetPath) line += ` 🗂 [[${targetPath}/README|${targetPath.split('/').pop()}]]`;
 
   const dailyPath = await api.vault.ensureDailyFile();
   await api.vault.appendToSection(dailyPath, '日常记录', line);
