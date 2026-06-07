@@ -249,9 +249,10 @@ async function toggleTask(task: any) {
     ? task.raw.replace(/- \[x\]/, '- [ ]')
     : task.raw.replace(/- \[ \]/, '- [x]');
   await api.vault.writeFile(task.file, content.replace(task.raw, toggled));
-  // 本地更新状态，不重新加载整个列表
+  // 本地更新状态，强制触发响应式
   task.done = !task.done;
   task.raw = toggled;
+  tasks.value = [...tasks.value]; // 强制 Vue 检测变更
 }
 
 // ── 速记 ──
