@@ -3,10 +3,17 @@
     <h2 style="margin-bottom: 16px">概览</h2>
     <!-- 统计卡片 -->
     <a-row :gutter="16">
-      <a-col :span="6" v-for="s in statsCards" :key="s.label">
-        <a-card :hoverable="false">
-          <a-statistic :title="s.label" :value="s.value" />
-        </a-card>
+      <a-col :span="6">
+        <a-card><a-statistic title="实体" :value="stats.entities" /></a-card>
+      </a-col>
+      <a-col :span="6">
+        <a-card><a-statistic title="主题" :value="stats.topics" /></a-card>
+      </a-col>
+      <a-col :span="6">
+        <a-card><a-statistic title="素材" :value="stats.sources" /></a-card>
+      </a-col>
+      <a-col :span="6">
+        <a-card><a-statistic title="综合分析" :value="stats.synthesis" /></a-card>
       </a-col>
     </a-row>
 
@@ -40,13 +47,6 @@ const api = window.electronAPI;
 const stats = reactive<VaultStats>({ entities: 0, topics: 0, sources: 0, synthesis: 0, totalFiles: 0 });
 const recentFiles = ref<FileInfo[]>([]);
 const loading = ref(true);
-
-const statsCards = [
-  { label: '实体', value: stats.entities },
-  { label: '主题', value: stats.topics },
-  { label: '素材', value: stats.sources },
-  { label: '综合分析', value: stats.synthesis },
-];
 
 onMounted(async () => {
   try {
