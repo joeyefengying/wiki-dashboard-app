@@ -336,6 +336,7 @@ export class VaultService {
                     results.push({
                         text: line.trim().replace(/- \[ \] /, ''),
                         file: f.replace(/\\/g, '/').replace(rootNorm + '/', ''),
+                        raw: line,
                     });
                 }
             }

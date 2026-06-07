@@ -284,7 +284,8 @@ var VaultService = class {
 			const lines = (0, fs.readFileSync)(f, "utf-8").split("\n");
 			for (const line of lines) if (line.match(/^\s*- \[ \] /)) results.push({
 				text: line.trim().replace(/- \[ \] /, ""),
-				file: f.replace(/\\/g, "/").replace(rootNorm + "/", "")
+				file: f.replace(/\\/g, "/").replace(rootNorm + "/", ""),
+				raw: line
 			});
 			if (results.length >= 40) break;
 		}

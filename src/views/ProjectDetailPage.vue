@@ -136,7 +136,7 @@ async function loadProject() {
         done: false,
         priority: pm ? pm[1] : '',
         due: dm ? dm[1] : '',
-        raw: '',
+        raw: (t as any).raw || '',
         file: t.file,
       } as any;
     });
