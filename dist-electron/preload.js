@@ -34,7 +34,8 @@ var api = {
 	},
 	cli: {
 		exec: (prompt) => electron.ipcRenderer.send("cli:execClaude", prompt),
-		kill: () => electron.ipcRenderer.send("cli:kill")
+		kill: () => electron.ipcRenderer.send("cli:kill"),
+		openTerminal: (prompt) => electron.ipcRenderer.invoke("cli:openTerminal", prompt)
 	}
 };
 electron.ipcRenderer.on("cli:output", (_e, line) => {

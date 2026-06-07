@@ -34,8 +34,8 @@ var VaultService = class {
 	constructor(root) {
 		this.root = root || "E:/project/obsidian-wiki";
 	}
-	setRoot(path$8) {
-		this.root = path$8;
+	setRoot(path$9) {
+		this.root = path$9;
 	}
 	vaultPath(relative) {
 		if (/^[a-zA-Z]:[/\\]/.test(relative)) return relative.replace(/\\/g, "/");
@@ -72,27 +72,27 @@ var VaultService = class {
 			};
 		}).sort((a, b) => b.mtime - a.mtime).slice(0, limit);
 	}
-	async readFile(path$9) {
-		return (0, fs.readFileSync)(this.vaultPath(path$9), "utf-8");
+	async readFile(path$10) {
+		return (0, fs.readFileSync)(this.vaultPath(path$10), "utf-8");
 	}
-	async writeFile(path$10, content) {
-		const full = this.vaultPath(path$10);
+	async writeFile(path$11, content) {
+		const full = this.vaultPath(path$11);
 		(0, fs.mkdirSync)((0, path.dirname)(full), { recursive: true });
 		(0, fs.writeFileSync)(full, content, "utf-8");
 	}
-	async appendFile(path$11, content) {
-		const full = this.vaultPath(path$11);
+	async appendFile(path$12, content) {
+		const full = this.vaultPath(path$12);
 		(0, fs.mkdirSync)((0, path.dirname)(full), { recursive: true });
 		(0, fs.appendFileSync)(full, content, "utf-8");
 	}
-	async listDir(path$12) {
-		const full = this.vaultPath(path$12);
+	async listDir(path$13) {
+		const full = this.vaultPath(path$13);
 		if (!(0, fs.existsSync)(full)) return [];
 		return (0, fs.readdirSync)(full).map((name) => {
 			const stat = (0, fs.statSync)((0, path.join)(full, name));
 			return {
 				name,
-				path: (path$12 + "/" + name).replace(/\\/g, "/").replace(/\/+/g, "/"),
+				path: (path$13 + "/" + name).replace(/\\/g, "/").replace(/\/+/g, "/"),
 				mtime: stat.mtimeMs,
 				size: stat.size,
 				isDir: stat.isDirectory()
@@ -120,11 +120,11 @@ var VaultService = class {
 		}
 		return nodes.sort((a, b) => a.name.localeCompare(b.name));
 	}
-	async createProject(path$13, readme) {
-		await this.writeFile(path$13 + "/README.md", readme);
+	async createProject(path$14, readme) {
+		await this.writeFile(path$14 + "/README.md", readme);
 	}
-	async deleteProject(path$14) {
-		const full = this.vaultPath(path$14);
+	async deleteProject(path$15) {
+		const full = this.vaultPath(path$15);
 		if ((0, fs.existsSync)(full)) {
 			const files = this.walkFiles(full);
 			for (const f of files.reverse()) try {
@@ -175,14 +175,14 @@ var VaultService = class {
 		return `周期笔记/${y}/Daily/${m}/${y}-${m}-${String(now.getDate()).padStart(2, "0")}.md`;
 	}
 	async ensureDailyFile() {
-		const path$15 = this.getDailyPath();
-		if ((0, fs.existsSync)(this.vaultPath(path$15))) return path$15;
-		await this.writeFile(path$15, `## 项目列表\n\n## 日常记录\n\n## 习惯打卡\n\n## 今日完成\n`);
-		return path$15;
+		const path$16 = this.getDailyPath();
+		if ((0, fs.existsSync)(this.vaultPath(path$16))) return path$16;
+		await this.writeFile(path$16, `## 项目列表\n\n## 日常记录\n\n## 习惯打卡\n\n## 今日完成\n`);
+		return path$16;
 	}
 	async getTasks(dailyPath) {
-		const path$16 = dailyPath || this.getDailyPath();
-		const full = this.vaultPath(path$16);
+		const path$17 = dailyPath || this.getDailyPath();
+		const full = this.vaultPath(path$17);
 		if (!(0, fs.existsSync)(full)) return [];
 		const content = (0, fs.readFileSync)(full, "utf-8");
 		return this.parseTasks(content);
@@ -5310,6 +5310,26 @@ var CliService = class {
 	/**
 	* 执行 claude 命令，实时推送输出到 callback
 	*/
+	/**
+	* 保存 prompt 到临时文件，返回文件路径
+	*/
+	savePrompt(prompt) {
+		const fs$1 = require("fs");
+		const path$8 = require("path");
+		const tmpDir = path$8.join(this.vaultRoot, ".tmp");
+		if (!fs$1.existsSync(tmpDir)) fs$1.mkdirSync(tmpDir, { recursive: true });
+		const filePath = path$8.join(tmpDir, "claude-prompt.txt");
+		fs$1.writeFileSync(filePath, prompt, "utf-8");
+		return filePath;
+	}
+	async openClaudeTerminal(prompt) {
+		const promptFile = this.savePrompt(prompt);
+		const cmd = `start "Claude Code" cmd /k "cd /d ${this.vaultRoot} && type "${promptFile}" && echo. && echo 粘贴上面的命令到claude中 && echo. && claude"`;
+		const { exec } = require("child_process");
+		return new Promise((resolve) => {
+			exec(cmd, { windowsHide: false }, () => resolve());
+		});
+	}
 	execClaudeLive(prompt, onOutput, onDone) {
 		if (this.activeProcess) this.activeProcess.kill();
 		const cmd = `claude`;
@@ -5468,6 +5488,9 @@ function registerIpc() {
 		}, (code) => {
 			if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send("cli:done", code);
 		});
+	});
+	electron.ipcMain.handle("cli:openTerminal", async (_event, prompt) => {
+		return await cliService.openClaudeTerminal(prompt);
 	});
 	electron.ipcMain.on("cli:kill", () => {
 		cliService.kill();

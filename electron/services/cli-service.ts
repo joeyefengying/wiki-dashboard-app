@@ -12,6 +12,29 @@ export class CliService {
     /**
      * 执行 claude 命令，实时推送输出到 callback
      */
+    /**
+     * 保存 prompt 到临时文件，返回文件路径
+     */
+    savePrompt(prompt: string): string {
+        const fs = require('fs');
+        const path = require('path');
+        const tmpDir = path.join(this.vaultRoot, '.tmp');
+        if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
+        const filePath = path.join(tmpDir, 'claude-prompt.txt');
+        fs.writeFileSync(filePath, prompt, 'utf-8');
+        return filePath;
+    }
+
+    async openClaudeTerminal(prompt: string): Promise<void> {
+        const promptFile = this.savePrompt(prompt);
+        // 用 start 打开新终端窗口，type 命令显示 prompt，然后启动 claude
+        const cmd = `start "Claude Code" cmd /k "cd /d ${this.vaultRoot} && type "${promptFile}" && echo. && echo 粘贴上面的命令到claude中 && echo. && claude"`;
+        const { exec } = require('child_process');
+        return new Promise((resolve) => {
+            exec(cmd, { windowsHide: false }, () => resolve());
+        });
+    }
+
     execClaudeLive(
         prompt: string,
         onOutput: (line: string) => void,

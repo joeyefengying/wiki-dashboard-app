@@ -35,6 +35,7 @@ const api = {
     cli: {
         exec: (prompt: string) => ipcRenderer.send('cli:execClaude', prompt),
         kill: () => ipcRenderer.send('cli:kill'),
+        openTerminal: (prompt: string) => ipcRenderer.invoke('cli:openTerminal', prompt),
     },
 };
 

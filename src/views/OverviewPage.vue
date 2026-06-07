@@ -25,7 +25,8 @@
           <a-button type="primary" @click="digest('url')">消化外链</a-button>
           <a-button @click="digest('local')">原地消化</a-button>
           <a-button @click="digest('ai')">AI 资讯</a-button>
-          <a-button type="primary" danger @click="digest('exec')" :loading="execLoading">▶ 直接执行</a-button>
+          <a-button type="primary" danger @click="digest('exec')" :loading="execLoading">▶ 后台执行</a-button>
+          <a-button @click="digest('terminal')">💻 打开终端</a-button>
         </a-space>
         <div v-if="execResult" style="margin-top: 8px; padding: 8px; background: #f5f5f5; border-radius: 4px; max-height: 200px; overflow-y: auto; font-size: 12px; white-space: pre-wrap">
           {{ execResult }}
@@ -97,6 +98,14 @@ async function digest(type: string) {
     cmd = `/llm-wiki 原地消化 ${path}`;
   } else if (type === 'ai') {
     cmd = '看一下今天 AI 圈有什么';
+  }
+
+  if (type === 'terminal') {
+    let input = digestUrl.value.trim();
+    if (!input) { message.warning('请先输入 URL'); return; }
+    if (!input.startsWith('http')) input = `请用 llm-wiki 消化：${input}`;
+    (window as any).electronAPI?.cli?.openTerminal(input);
+    return;
   }
 
   if (type === 'exec') {

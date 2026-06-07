@@ -156,6 +156,10 @@ function registerIpc() {
         );
     });
 
+    ipcMain.handle('cli:openTerminal', async (_event, prompt: string) => {
+        return await cliService.openClaudeTerminal(prompt);
+    });
+
     ipcMain.on('cli:kill', () => {
         cliService.kill();
         if (mainWindow && !mainWindow.isDestroyed()) {
